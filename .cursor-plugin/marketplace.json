@@ -1,0 +1,26 @@
+{
+  "name": "evolver",
+  "owner": {
+    "name": "EvoMap"
+  },
+  "plugins": [
+    {
+      "name": "evolver",
+      "source": "./",
+      "description": "Persistent, auditable evolution memory for the agent — recalls what worked, detects improvement signals, records outcomes. Powered by the Genome Evolution Protocol (GEP).",
+      "author": {
+        "name": "EvoMap"
+      },
+      "homepage": "https://evomap.ai",
+      "repository": "https://github.com/EvoMap/evolver-cursor-plugin",
+      "license": "GPL-3.0-or-later",
+      "keywords": [
+        "evolution",
+        "self-improvement",
+        "agent-memory",
+        "gep",
+        "mcp"
+      ]
+    }
+  ]
+}
