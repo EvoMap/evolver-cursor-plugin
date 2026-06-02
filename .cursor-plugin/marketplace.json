@@ -13,7 +13,7 @@
       },
       "homepage": "https://evomap.ai",
       "repository": "https://github.com/EvoMap/evolver-cursor-plugin",
-      "license": "GPL-3.0-or-later",
+      "license": "MIT",
       "keywords": [
         "evolution",
         "self-improvement",

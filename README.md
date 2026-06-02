@@ -111,5 +111,8 @@ re-bundled here to avoid duplicating that separately-maintained product.
 
 ## License
 
-GPL-3.0-or-later. The bundled hook scripts are derived from
-[`@evomap/evolver`](https://github.com/EvoMap/evolver). See `LICENSE`.
+MIT © EvoMap. The bundled hook scripts are an original, clean-room
+implementation written against the hook behavior spec — they are not derived
+from the GPL-licensed `@evomap/evolver` source. Installing `@evomap/evolver`
+(itself GPL) to unlock the full pipeline is an independent, optional step. See
+`LICENSE`.

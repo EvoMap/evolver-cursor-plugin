@@ -3,19 +3,19 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/evolver-session-start.js\"",
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-start.js\"",
         "timeout": 3
       }
     ],
     "afterFileEdit": [
       {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/evolver-signal-detect.js\"",
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/signal-detect.js\"",
         "timeout": 2
       }
     ],
     "stop": [
       {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/evolver-session-end.js\"",
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-end.js\"",
         "timeout": 8,
         "loop_limit": 1
       }
