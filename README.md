@@ -28,7 +28,10 @@ It also ships:
 - An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
   `evolver_search_assets`, `evolver_status`, `evolver_fetch_asset`,
   `evolver_publish_asset`, `evolver_poll`.
-- **`/evolve`** and **`/search`** commands.
+- Slash commands: **`/evolve`** (checkpoint), **`/search`** (find network assets),
+  **`/status`** (health), and engine wrappers **`/run`**, **`/solidify`**,
+  **`/review`**, **`/sync`**, **`/distill`** (use the `@evomap/evolver` CLI when
+  installed, else `npx -y @evomap/evolver`).
 - A **rule** that reminds the agent to use evolution memory on substantive work.
 
 ## Install
