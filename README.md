@@ -8,10 +8,9 @@ turned out — so the next session starts smarter.
 Powered by the [Genome Evolution Protocol (GEP)](https://evomap.ai) and the
 [`@evomap/evolver`](https://github.com/EvoMap/evolver) engine.
 
-> **Status:** v0.1.0 — hooks + skill + rule. Works standalone (local memory).
-> The MCP tool surface is provided separately by
-> [`@evomap/gep-mcp-server`](https://github.com/EvoMap/gep-mcp-server) and is
-> intentionally **not** bundled here (see *Architecture* below).
+> **Status:** v0.2.0 — hooks + skill + commands + MCP bridge. Works standalone
+> (local memory) and, when the Proxy is running, exposes the EvoMap mailbox
+> (genes/capsules) as MCP tools.
 
 ## What it does
 
@@ -26,7 +25,10 @@ Three hooks run automatically — you don't invoke them:
 It also ships:
 
 - A **`capability-evolver` skill** describing the recall → work → record loop.
-- An **`/evolve` command** for a deliberate evolution checkpoint.
+- An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
+  `evolver_search_assets`, `evolver_status`, `evolver_fetch_asset`,
+  `evolver_publish_asset`, `evolver_poll`.
+- **`/evolve`** and **`/search`** commands.
 - A **rule** that reminds the agent to use evolution memory on substantive work.
 
 ## Install
@@ -88,28 +90,25 @@ The `stop` hook will then record outcomes to the Hub (with a local fallback if
 the Hub is unreachable). See the [evolver docs](https://evomap.ai) for node
 registration.
 
-## Architecture (why no bundled MCP server)
+## Architecture (the MCP bridge vs. gep-mcp-server)
 
-EvoMap deliberately splits two products:
-
-- **`@evomap/evolver`** — the GPL-licensed, source-available evolution engine
-  (daemon + CLI). This plugin does **not** bundle it; the plugin's own hooks are
-  an independent MIT clean-room implementation that records memory in the same
-  format the engine reads, so the two interoperate when you install it.
-- **`@evomap/gep-mcp-server`** — an Apache-licensed, standalone **protocol
-  layer** that exposes GEP capabilities as MCP tools to any MCP client.
-
-This plugin ships its own lightweight session-lifecycle hooks (the glue Cursor
-needs), which work standalone and degrade gracefully. If you also want the
-`gep_*` MCP tools inside Cursor, add `@evomap/gep-mcp-server` to your Cursor MCP
-config directly — it is not re-bundled here to avoid duplicating that
-separately-maintained product.
+- **This plugin's `evolver-proxy` bridge** is a thin, MIT, zero-dependency glue
+  that exposes the *local* Proxy mailbox (the genes/capsules already synced to
+  your machine) as MCP tools, reading the live url + auth token from
+  `~/.evolver/settings.json`. It degrades gracefully when the Proxy is down.
+- **`@evomap/gep-mcp-server`** is the standalone, Apache-licensed **full GEP
+  protocol layer** — the complete `gep_*` tool surface for any MCP client. Add it
+  to your MCP config directly if you want that richer surface; the two compose.
+- **`@evomap/evolver`** is the GPL-licensed engine (daemon + CLI). The plugin's
+  hooks are an independent MIT clean-room implementation that records memory in
+  the same format the engine reads, so they interoperate when you install it.
 
 ## Environment variables
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `MEMORY_GRAPH_PATH` | (auto) | Override the memory graph file location. |
+| `EVOMAP_PROXY_PORT` | `19820` | Proxy port the MCP bridge falls back to (live url read from `~/.evolver/settings.json`). |
 | `EVOMAP_HUB_URL` / `EVOMAP_API_KEY` / `EVOMAP_NODE_ID` | (unset) | Enable Hub recording. |
 | `EVOLVER_HOOK_VERBOSE` | `0` | Set `1` to surface the session-end receipt inline (suppressed on Cursor by default). |
 
