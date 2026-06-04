@@ -63,16 +63,16 @@ async function proxyFetch(method, path, body) {
       let hint = '';
       if ([401, 403].includes(res.status)) {
         hint = token
-          ? ' The Proxy token in ~/.evolver/settings.json looks stale (the Proxy mints a fresh token on restart). Restart this Claude session so the bridge re-reads it, or run /evolver:status.'
-          : ` No Proxy token found in ~/.evolver/settings.json and the request was rejected — another process may be using ${base}. Start the Proxy (run \`evolver\` once in a git repo) or set EVOMAP_PROXY_PORT, then run /evolver:status.`;
+          ? ' The Proxy token in ~/.evolver/settings.json looks stale (the Proxy mints a fresh token on restart). Restart this Cursor session so the bridge re-reads it, or run /status.'
+          : ` No Proxy token found in ~/.evolver/settings.json and the request was rejected — another process may be using ${base}. Start the Proxy (run \`evolver\` once in a git repo) or set EVOMAP_PROXY_PORT, then run /status.`;
       } else if (res.status === 404) {
-        hint = ` Endpoint not found at ${base} — it may not be the Evolver Proxy. Confirm with /evolver:status.`;
+        hint = ` Endpoint not found at ${base} — it may not be the Evolver Proxy. Confirm with /status.`;
       }
       return { ok: false, error: `Proxy at ${base} returned HTTP ${res.status}: ${typeof data === 'object' ? JSON.stringify(data) : text}.${hint}` };
     }
     return { ok: true, data };
   } catch (e) {
-    const hint = `Evolver Proxy not reachable at ${base}. Start it by running \`evolver\` once inside a git repo (the CLI launches the Proxy), or run /evolver:status. Set EVOMAP_PROXY_PORT if you use a non-default port.`;
+    const hint = `Evolver Proxy not reachable at ${base}. Start it by running \`evolver\` once inside a git repo (the CLI launches the Proxy), or run /status. Set EVOMAP_PROXY_PORT if you use a non-default port.`;
     return { ok: false, error: `${e.name === 'AbortError' ? 'Proxy request timed out' : 'Proxy connection failed: ' + e.message}. ${hint}` };
   } finally {
     clearTimeout(timer);
