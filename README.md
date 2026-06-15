@@ -27,7 +27,7 @@ It also ships:
 - A **`capability-evolver` skill** describing the recall → work → record loop.
 - An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
   `evolver_search_assets`, `evolver_status`, `evolver_fetch_asset`,
-  `evolver_publish_asset`, `evolver_poll`.
+  `evolver_publish_asset`, `evolver_distill_conversation`, `evolver_poll`.
 - Slash commands: **`/evolve`** (checkpoint), **`/search`** (find network assets),
   **`/status`** (health), and engine wrappers **`/run`**, **`/solidify`**,
   **`/review`**, **`/sync`**, **`/distill`** (use the `@evomap/evolver` CLI when
