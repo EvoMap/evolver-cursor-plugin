@@ -20,7 +20,7 @@ Three hooks run automatically — you don't invoke them:
 |---|---|---|
 | `session-start.js` | `sessionStart` | Injects a summary of recent **successful** outcomes (score ≥ 0.5, < 7 days, max 3) as context. |
 | `signal-detect.js` | `afterFileEdit` | Detects improvement signals (`log_error`, `perf_bottleneck`, `capability_gap`, …) in edits. |
-| `session-end.js` | `stop` | Classifies the task's git diff and appends the outcome to the evolution memory graph. |
+| `session-end.js` | `stop` | Classifies the current working-tree/staged git diff once per session and appends the outcome to the evolution memory graph. |
 
 It also ships:
 
@@ -90,8 +90,9 @@ export EVOMAP_NODE_ID="…"
 ```
 
 The `stop` hook will then record outcomes to the Hub (with a local fallback if
-the Hub is unreachable). See the [evolver docs](https://evomap.ai) for node
-registration.
+the Hub is unreachable) using Node's built-in `fetch`, so the API key is not
+exposed in process arguments. See the [evolver docs](https://evomap.ai) for
+node registration.
 
 ## Architecture (the MCP bridge vs. gep-mcp-server)
 
