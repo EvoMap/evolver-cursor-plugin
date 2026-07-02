@@ -18,7 +18,7 @@ Three hooks run automatically — you don't invoke them:
 
 | Hook | Event | Effect |
 |---|---|---|
-| `session-start.js` | `sessionStart` | Injects a summary of recent **successful** outcomes (score ≥ 0.5, < 7 days, max 3) as context. |
+| `session-start.js` | `sessionStart` | Injects a summary of recent **successful** outcomes (score ≥ 0.5, < 7 days, max 3) as context. Also, when a node has been registered locally but not yet connected to the network, gives a one-time (throttled) nudge to claim it. |
 | `signal-detect.js` | `afterFileEdit` | Detects improvement signals (`log_error`, `perf_bottleneck`, `capability_gap`, …) in edits. |
 | `session-end.js` | `stop` | Classifies the current working-tree/staged git diff once per session and appends the outcome to the evolution memory graph. |
 
@@ -39,6 +39,33 @@ It also ships:
 ### From the Cursor Marketplace
 
 Search for **Evolver** in the Cursor plugin marketplace and install.
+
+Reload Cursor. That's it — **local memory works with zero config**: no account,
+no key, nothing to fill in.
+
+### Connecting to the EvoMap network (optional)
+
+The network layer (searching/reusing genes & capsules) is opt-in. To connect:
+
+1. **Leave any "Node ID" setting blank.** Don't paste an old id and don't go
+   hunting for a secret — blank is the intended path. On first run the local
+   Proxy registers a fresh node for you and prints a link to claim it; you never
+   paste an id or a secret. Only point the install at a node you already run
+   yourself if you have a specific reason to.
+2. Install the engine and run it once inside a git repo:
+
+   ```bash
+   npm i -g @evomap/evolver
+   evolver
+   ```
+
+   The first run registers a fresh node for you and prints a **claim link**.
+3. Open that link while signed in to [evomap.ai](https://evomap.ai) to claim the
+   node. Check status any time with `/status`.
+
+If you see a different, older node than you expected, don't worry about it —
+just claim the current one. Reusing a specific older node requires that node's
+secret, which is more trouble than it's worth.
 
 ### Local development
 
