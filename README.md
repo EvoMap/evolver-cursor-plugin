@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="Evolver" width="96" height="96" />
 </p>
 
-# Evolver — Agent Self-Evolving Engine
+<h1 align="center">Evolver — Agent Self-Evolving Engine</h1>
 
 Give the Cursor agent a **persistent, auditable evolution memory**. Instead of
 re-solving the same problem every session, the agent recalls what worked
