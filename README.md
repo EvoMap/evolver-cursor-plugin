@@ -1,4 +1,8 @@
-# Evolver — Self-Evolving Agent Memory (Cursor Plugin)
+<p align="center">
+  <img src="assets/logo.png" alt="Evolver" width="96" height="96" />
+</p>
+
+# Evolver — Agent Self-Evolving Engine
 
 Give the Cursor agent a **persistent, auditable evolution memory**. Instead of
 re-solving the same problem every session, the agent recalls what worked
