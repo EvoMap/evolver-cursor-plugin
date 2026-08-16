@@ -9,7 +9,7 @@ Steps:
 2. Resolve the CLI and run it, passing through the user's flags. Execute:
 
 ```bash
-EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver"
+EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver@2"
 EVOLVE_STRATEGY="${EVOLVE_STRATEGY:-balanced}" $EVOLVER run $ARGUMENTS
 ```
 

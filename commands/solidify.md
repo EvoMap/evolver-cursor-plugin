@@ -8,7 +8,7 @@ Solidify the current working-tree changes into a durable Evolver asset.
 2. Resolve the CLI and run solidify with the user's flags:
 
 ```bash
-EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver"
+EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver@2"
 $EVOLVER solidify $ARGUMENTS
 ```
 

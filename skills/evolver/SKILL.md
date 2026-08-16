@@ -1,9 +1,9 @@
 ---
-name: capability-evolver
+name: evolver
 description: Self-evolution workflow for the agent. Before a substantive task, recall what worked on similar past tasks from evolution memory; after it, record the outcome so future sessions learn from it. Use when the user starts non-trivial work (a feature, a fix, a refactor) or asks the agent to "evolve", "learn from this", or "remember how this went".
 ---
 
-# Capability Evolver
+# Evolver
 
 This plugin gives the agent a **persistent, auditable evolution memory** built on the
 Genome Evolution Protocol (GEP). The goal is simple: stop re-solving the same
@@ -64,7 +64,7 @@ review-and-solidify cycle that proposes and applies code improvements), install
 it:
 
 ```bash
-npm install -g @evomap/evolver
+npm install -g @evomap/evolver@2
 ```
 
 This gives you the engine's CLI (e.g. `evolver run`, surfaced as the `/run`

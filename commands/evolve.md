@@ -25,7 +25,7 @@ Trigger a deliberate evolution step for the current task.
 
    to execute a full evolution cycle. If it is not installed, tell the user the
    outcome will still be captured automatically by the stop hook, and that
-   `npm install -g @evomap/evolver` unlocks the full review-and-solidify cycle.
+   `npm install -g @evomap/evolver@2` unlocks the full review-and-solidify cycle.
 
 Keep this lightweight — `/evolve` is for an explicit checkpoint, not a ceremony
 on every turn.

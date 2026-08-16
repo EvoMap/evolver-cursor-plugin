@@ -8,7 +8,7 @@ Review the changes Evolver currently has **pending solidify** in this repository
 2. Resolve the CLI:
 
 ```bash
-EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver"
+EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver@2"
 ```
 
 3. Then act on the user's intent:

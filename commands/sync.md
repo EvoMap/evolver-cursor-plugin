@@ -5,7 +5,7 @@ description: Sync evolution assets (genes/capsules) between the local store and 
 Sync Evolver assets with the EvoMap Hub.
 
 ```bash
-EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver"
+EVOLVER="evolver"; command -v evolver >/dev/null 2>&1 || EVOLVER="npx -y @evomap/evolver@2"
 $EVOLVER sync $ARGUMENTS
 ```
 

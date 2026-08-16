@@ -42,7 +42,7 @@ R=$(git rev-parse --show-toplevel 2>/dev/null); [ -n "$R" ] && { [ -f "$R/.evolv
 4. **Full engine (optional)** — is the `@evomap/evolver` CLI installed?
 
 ```bash
-command -v evolver >/dev/null 2>&1 && evolver --version 2>/dev/null | head -1 || echo "evolver CLI not installed — hooks + MCP still work; 'npm i -g @evomap/evolver' unlocks /run etc."
+command -v evolver >/dev/null 2>&1 && evolver --version 2>/dev/null | head -1 || echo "evolver CLI not installed — hooks + MCP still work; 'npm i -g @evomap/evolver@2' unlocks /run etc."
 ```
 
 Finish with one line on overall readiness.

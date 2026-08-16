@@ -12,9 +12,9 @@ turned out — so the next session starts smarter.
 Powered by the [Genome Evolution Protocol (GEP)](https://evomap.ai) and the
 [`@evomap/evolver`](https://github.com/EvoMap/evolver) engine.
 
-> **Status:** v0.2.0 — hooks + skill + commands + MCP bridge. Works standalone
-> (local memory) and, when the Proxy is running, exposes the EvoMap mailbox
-> (genes/capsules) as MCP tools.
+> **Status:** v2.0.0 — aligned with `@evomap/evolver` 2.x. Hooks + `evolver`
+> skill + commands + MCP bridge. Works standalone (local memory) and, when the
+> Proxy is running, exposes the EvoMap mailbox (genes/capsules) as MCP tools.
 
 ## What it does
 
@@ -28,14 +28,14 @@ Three hooks run automatically — you don't invoke them:
 
 It also ships:
 
-- A **`capability-evolver` skill** describing the recall → work → record loop.
+- An **`evolver` skill** describing the recall → work → record loop.
 - An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
   `evolver_search_assets`, `evolver_status`, `evolver_fetch_asset`,
   `evolver_publish_asset`, `evolver_distill_conversation`, `evolver_poll`.
 - Slash commands: **`/evolve`** (checkpoint), **`/search`** (find network assets),
   **`/status`** (health), and engine wrappers **`/run`**, **`/solidify`**,
   **`/review`**, **`/sync`**, **`/distill`** (use the `@evomap/evolver` CLI when
-  installed, else `npx -y @evomap/evolver`).
+  installed, else `npx -y @evomap/evolver@2`).
 - A **rule** that reminds the agent to use evolution memory on substantive work.
 
 ## Install
@@ -59,7 +59,7 @@ The network layer (searching/reusing genes & capsules) is opt-in. To connect:
 2. Install the engine and run it once inside a git repo:
 
    ```bash
-   npm i -g @evomap/evolver
+   npm i -g @evomap/evolver@2
    evolver
    ```
 
@@ -97,7 +97,7 @@ immediately. **No account, no key, no network.**
 ### Full engine
 
 ```bash
-npm install -g @evomap/evolver
+npm install -g @evomap/evolver@2
 ```
 
 The bundled hooks always do lightweight **local** recall/record — local git

@@ -20,6 +20,6 @@ For any **substantive** task (a feature, a non-trivial fix, a refactor):
 Skip this for trivial or purely conversational turns — evolution memory is for
 work worth learning from, not ceremony on every reply.
 
-The `capability-evolver` skill and the `/evolve` command provide the full
-workflow. Installing `@evomap/evolver` (`npm install -g @evomap/evolver`)
+The `evolver` skill and the `/evolve` command provide the full
+workflow. Installing `@evomap/evolver` (`npm install -g @evomap/evolver@2`)
 upgrades the local-only memory into the full review-and-solidify pipeline.
