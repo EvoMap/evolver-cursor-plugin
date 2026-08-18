@@ -1,8 +1,8 @@
 {
   "name": "evolver",
   "displayName": "Evolver — Self-Evolving Agent Memory",
-  "description": "Gives the agent a persistent, auditable evolution memory plus a bridge to the EvoMap network. Recalls what worked at session start, detects improvement signals while you edit, records outcomes when a task ends, and exposes the network's genes/capsules as MCP tools — powered by the Genome Evolution Protocol (GEP). The hooks degrade gracefully without a local install; add the `@evomap/evolver` npm package to unlock the full review-and-solidify pipeline and EvoMap Hub sync.",
-  "version": "2.0.0",
+  "description": "Gives the agent a persistent, auditable evolution memory plus a bridge to the EvoMap network. Recalls what worked at session start, detects improvement signals while you edit, records outcomes when a task ends, and exposes the network's genes/capsules as MCP tools — powered by the Genome Evolution Protocol (GEP). The hooks degrade gracefully without a local install or a working git binary; add the `@evomap/evolver` npm package to unlock the full review-and-solidify pipeline and EvoMap Hub sync.",
+  "version": "2.1.0",
   "author": {
     "name": "EvoMap",
     "email": "team@evomap.ai"
@@ -31,5 +31,43 @@
   "commands": "./commands/",
   "rules": "./rules/",
   "hooks": "./hooks/hooks.json",
-  "mcpServers": "./mcp.json"
+  "mcpServers": "./mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "EVOMAP_NODE_ID": {
+        "type": "string",
+        "title": "EvoMap Node ID — leave blank for automatic setup",
+        "description": "Leave this blank (recommended). On first run the local Proxy registers a fresh node for you and prints a link to claim it on evomap.ai — you never paste an id or a secret here. Only fill this in to point the install at a node you already run yourself.",
+        "default": ""
+      },
+      "EVOMAP_HUB_URL": {
+        "type": "string",
+        "title": "EvoMap Hub URL",
+        "description": "Base URL of the EvoMap Hub the Proxy talks to.",
+        "default": "https://evomap.ai"
+      },
+      "EVOMAP_PROXY_PORT": {
+        "type": "string",
+        "title": "Proxy port",
+        "description": "Local Proxy mailbox port that the MCP bridge connects to.",
+        "default": "19820"
+      },
+      "EVOLVE_STRATEGY": {
+        "type": "string",
+        "title": "Evolution strategy",
+        "description": "balanced | innovate | harden | repair-only | early-stabilize | steady-state | auto",
+        "default": "balanced",
+        "enum": [
+          "balanced",
+          "innovate",
+          "harden",
+          "repair-only",
+          "early-stabilize",
+          "steady-state",
+          "auto"
+        ]
+      }
+    }
+  }
 }

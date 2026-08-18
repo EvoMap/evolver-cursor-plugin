@@ -18,6 +18,66 @@ const { spawnSync } = require('child_process');
 // hex string of at least 32 characters. Keep this in sync with the contract.
 const WORKSPACE_ID_PATTERN = /^[a-f0-9]{32,}$/i;
 
+const GIT_PROBE_TIMEOUT_MS = 2000;
+const GIT_TIMEOUT_MS = 5000;
+const GIT_MAX_BUFFER = 10 * 1024 * 1024;
+
+// Cached result of git-binary resolution. `undefined` = not yet probed;
+// `null` = git must not be spawned (missing, or macOS Xcode stub);
+// string = argv0 to pass to spawnSync.
+let resolvedGitBinary = undefined;
+
+const DARWIN_GIT_FALLBACKS = ['/opt/homebrew/bin/git', '/usr/local/bin/git'];
+const FORBIDDEN_GIT_SUBCOMMANDS = new Set(['init', 'clone', 'daemon']);
+// Global git options that consume the following argv entry. Needed so
+// `git -c credential.interactive=false init` is still recognized as `init`
+// (Cursor's plugin installer uses this shape).
+const GIT_OPTIONS_WITH_VALUE = new Set([
+  '-c',
+  '-C',
+  '-o',
+  '--git-dir',
+  '--work-tree',
+  '--namespace',
+  '--config-env',
+]);
+
+function gitSubcommand(args) {
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (typeof arg !== 'string') {
+      continue;
+    }
+    if (arg === '--') {
+      const next = args[i + 1];
+      return typeof next === 'string' ? next : '';
+    }
+    if (GIT_OPTIONS_WITH_VALUE.has(arg)) {
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('-')) {
+      continue;
+    }
+    return arg;
+  }
+  return '';
+}
+
+/**
+ * Return true when `candidate` is a string pointing at an existing regular file.
+ */
+function looksLikeFile(candidate) {
+  if (typeof candidate !== 'string' || candidate.length === 0) {
+    return false;
+  }
+  try {
+    return fs.statSync(candidate).isFile();
+  } catch (_err) {
+    return false;
+  }
+}
+
 /**
  * Return true when `candidate` is a string pointing at an existing directory.
  * Any stat failure is swallowed and treated as "not a directory".
@@ -31,6 +91,164 @@ function looksLikeDir(candidate) {
   } catch (_err) {
     return false;
   }
+}
+
+/**
+ * Reset the cached git-binary probe. Exported for tests only.
+ */
+function _resetGitBinaryCache() {
+  resolvedGitBinary = undefined;
+}
+
+/**
+ * Look up `cmd` on PATH without executing it. Returns an absolute path or null.
+ */
+function lookUpOnPath(cmd) {
+  if (typeof cmd !== 'string' || cmd.length === 0) {
+    return null;
+  }
+  const pathVar = process.env.PATH || '';
+  const sep = process.platform === 'win32' ? ';' : ':';
+  const exts =
+    process.platform === 'win32' ? ['.exe', '.cmd', '.bat', ''] : [''];
+  for (const dir of pathVar.split(sep)) {
+    if (!dir) {
+      continue;
+    }
+    for (const ext of exts) {
+      const candidate = path.join(dir, cmd + ext);
+      if (looksLikeFile(candidate)) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * True when macOS has no developer directory configured, so `/usr/bin/git` is
+ * the Xcode stub that prints "No developer tools were found" and pops the
+ * install dialog. `xcode-select -p` reports this without triggering the GUI.
+ */
+function darwinDeveloperDirMissing() {
+  if (process.platform !== 'darwin') {
+    return false;
+  }
+  try {
+    const result = spawnSync('xcode-select', ['-p'], {
+      shell: false,
+      timeout: GIT_PROBE_TIMEOUT_MS,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return result.status !== 0;
+  } catch (_err) {
+    return true;
+  }
+}
+
+/**
+ * Resolve a git binary that is safe to spawn. Never returns `/usr/bin/git`
+ * when that path is the Xcode CLT stub — spawning it is what produces the
+ * Cursor "Error loading plugin" / `git init` + xcode-select failure.
+ *
+ * Override: set `EVOLVER_GIT_BINARY` to an absolute path, or to empty to
+ * force "git unavailable".
+ *
+ * @returns {string|null}
+ */
+function resolveGitBinary() {
+  if (resolvedGitBinary !== undefined) {
+    return resolvedGitBinary;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(process.env, 'EVOLVER_GIT_BINARY')) {
+    const override = process.env.EVOLVER_GIT_BINARY;
+    resolvedGitBinary =
+      typeof override === 'string' && override.length > 0 ? override : null;
+    return resolvedGitBinary;
+  }
+
+  const pathGit = lookUpOnPath('git');
+
+  if (darwinDeveloperDirMissing()) {
+    if (pathGit && pathGit !== '/usr/bin/git') {
+      resolvedGitBinary = pathGit;
+      return resolvedGitBinary;
+    }
+    for (const candidate of DARWIN_GIT_FALLBACKS) {
+      if (looksLikeFile(candidate)) {
+        resolvedGitBinary = candidate;
+        return resolvedGitBinary;
+      }
+    }
+    resolvedGitBinary = null;
+    return null;
+  }
+
+  resolvedGitBinary = pathGit || 'git';
+  return resolvedGitBinary;
+}
+
+/**
+ * Spawn git with non-interactive env. Never runs `init` / `clone`.
+ * Returns { status, stdout, stderr }. status is 1 on any failure, including
+ * "git is not available".
+ */
+function runGit(args, cwd, options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  if (!Array.isArray(args) || args.length === 0) {
+    return { status: 1, stdout: '', stderr: 'git: missing arguments' };
+  }
+  const sub = gitSubcommand(args);
+  if (FORBIDDEN_GIT_SUBCOMMANDS.has(sub)) {
+    return {
+      status: 1,
+      stdout: '',
+      stderr: `evolver hooks never run git ${sub}`,
+    };
+  }
+
+  const bin = resolveGitBinary();
+  if (!bin) {
+    return { status: 1, stdout: '', stderr: 'git is not available' };
+  }
+
+  try {
+    const result = spawnSync(bin, args, {
+      cwd: looksLikeDir(cwd) ? cwd : undefined,
+      shell: false,
+      timeout: typeof opts.timeout === 'number' ? opts.timeout : GIT_TIMEOUT_MS,
+      maxBuffer:
+        typeof opts.maxBuffer === 'number' ? opts.maxBuffer : GIT_MAX_BUFFER,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: Object.assign({}, process.env, {
+        GIT_TERMINAL_PROMPT: '0',
+        GIT_ASKPASS: '',
+      }),
+    });
+    return {
+      status: typeof result.status === 'number' ? result.status : 1,
+      stdout: typeof result.stdout === 'string' ? result.stdout : '',
+      stderr: typeof result.stderr === 'string' ? result.stderr : '',
+    };
+  } catch (_err) {
+    return { status: 1, stdout: '', stderr: '' };
+  }
+}
+
+/**
+ * Diagnose git usability for a directory without spawning the Xcode stub.
+ */
+function gitUsability(dir) {
+  const repoRoot = findRepoRoot(dir);
+  const binary = resolveGitBinary();
+  return {
+    hasRepo: repoRoot !== null,
+    gitBinary: binary,
+    usable: repoRoot !== null && binary !== null,
+  };
 }
 
 /**
@@ -55,29 +273,13 @@ function resolveProjectDir() {
 
 /**
  * Determine whether `dir` lives inside a git working tree.
- * Shells out to `git rev-parse --is-inside-work-tree`. Returns false on any
- * problem (git missing, not a repo, timeout, etc.).
+ *
+ * Uses a filesystem walk for `.git` (directory or worktree file) so we never
+ * spawn git — on macOS without Xcode CLT, spawning `/usr/bin/git` pops the
+ * developer-tools dialog and can surface as Cursor's "Error loading plugin".
  */
 function isGitWorkspace(dir) {
-  try {
-    const result = spawnSync(
-      'git',
-      ['rev-parse', '--is-inside-work-tree'],
-      {
-        cwd: looksLikeDir(dir) ? dir : undefined,
-        shell: false,
-        timeout: 5000,
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }
-    );
-    if (result.status !== 0 || typeof result.stdout !== 'string') {
-      return false;
-    }
-    return result.stdout.trim() === 'true';
-  } catch (_err) {
-    return false;
-  }
+  return findRepoRoot(dir) !== null;
 }
 
 /**
@@ -317,6 +519,11 @@ function resolveWorkspaceId(projectDir) {
 module.exports = {
   resolveProjectDir,
   isGitWorkspace,
+  findRepoRoot,
   findMemoryGraph,
   resolveWorkspaceId,
+  resolveGitBinary,
+  runGit,
+  gitUsability,
+  _resetGitBinaryCache,
 };

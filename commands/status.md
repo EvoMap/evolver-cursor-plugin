@@ -1,4 +1,5 @@
 ---
+name: status
 description: Show Evolver health — Proxy/MCP status, evolution memory, workspace id, and whether the full engine is installed.
 ---
 

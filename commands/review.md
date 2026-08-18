@@ -1,4 +1,5 @@
 ---
+name: review
 description: Review Evolver's pending evolved changes, then approve (solidify) or reject (roll back).
 ---
 

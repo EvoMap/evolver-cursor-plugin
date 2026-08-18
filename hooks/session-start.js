@@ -16,7 +16,7 @@ const path = require('path');
 
 const {
   resolveProjectDir,
-  isGitWorkspace,
+  gitUsability,
   findMemoryGraph,
   resolveWorkspaceId,
 } = require('./_paths');
@@ -30,8 +30,16 @@ const THROTTLE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 const NONGIT_NOTICE =
   '[Evolver] This folder is not a git repository, so evolution memory is ' +
-  'inactive (outcomes are derived from git diffs). Run `git init` here, or ' +
-  'open a git project, to enable recall and recording.';
+  'inactive (outcomes are derived from git diffs). Open a git project to ' +
+  'enable recall and recording.';
+
+const NOGIT_BINARY_NOTICE =
+  '[Evolver] A git repository is present but git itself is not usable, so ' +
+  'evolution memory cannot record diffs. On macOS this usually means Xcode ' +
+  'Command Line Tools are missing: run xcode-select --install, or install ' +
+  'Git with Homebrew (brew install git) so /opt/homebrew/bin/git exists. ' +
+  'Do not use Apple\'s /usr/bin/git stub — it pops a developer-tools dialog ' +
+  'and Cursor reports "Error loading plugin".';
 
 // The hook's own timeout is 3s; give stdin a slightly shorter window to drain.
 const STDIN_WATCHDOG_MS = 2000;
@@ -244,11 +252,16 @@ function main() {
   const parts = [];
   const currentDir = resolveProjectDir();
 
-  // 1. Non-git notice (throttled per directory).
+  // 1. Non-git / unusable-git notice (throttled per directory).
   try {
-    if (!isGitWorkspace(currentDir)) {
+    const git = gitUsability(currentDir);
+    if (!git.hasRepo) {
       if (!throttled(`nongit:${currentDir}`, NONGIT_TTL_MS)) {
         parts.push(NONGIT_NOTICE);
+      }
+    } else if (!git.gitBinary) {
+      if (!throttled(`nogitbin:${currentDir}`, NONGIT_TTL_MS)) {
+        parts.push(NOGIT_BINARY_NOTICE);
       }
     }
   } catch (_err) {

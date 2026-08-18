@@ -12,9 +12,11 @@ turned out — so the next session starts smarter.
 Powered by the [Genome Evolution Protocol (GEP)](https://evomap.ai) and the
 [`@evomap/evolver`](https://github.com/EvoMap/evolver) engine.
 
-> **Status:** v2.0.0 — aligned with `@evomap/evolver` 2.x. Hooks + `evolver`
+> **Status:** v2.1.0 — aligned with `@evomap/evolver` 2.x. Hooks + `evolver`
 > skill + commands + MCP bridge. Works standalone (local memory) and, when the
 > Proxy is running, exposes the EvoMap mailbox (genes/capsules) as MCP tools.
+> Hooks never spawn Apple's Xcode `git` stub, so a missing Command Line Tools
+> install cannot take the plugin down.
 
 ## What it does
 
@@ -24,14 +26,15 @@ Three hooks run automatically — you don't invoke them:
 |---|---|---|
 | `session-start.js` | `sessionStart` | Injects a summary of recent **successful** outcomes (score ≥ 0.5, < 7 days, max 3) as context. Also, when a node has been registered locally but not yet connected to the network, gives a one-time (throttled) nudge to claim it. |
 | `signal-detect.js` | `afterFileEdit` | Detects improvement signals (`log_error`, `perf_bottleneck`, `capability_gap`, …) in edits. |
-| `session-end.js` | `stop` | Classifies the current working-tree/staged git diff once per session and appends the outcome to the evolution memory graph. |
+| `session-end.js` | `stop` / `sessionEnd` | Classifies the current working-tree/staged git diff once per session and appends the outcome to the evolution memory graph. Duplicate firings are suppressed. |
 
 It also ships:
 
 - An **`evolver` skill** describing the recall → work → record loop.
 - An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
-  `evolver_search_assets`, `evolver_status`, `evolver_fetch_asset`,
-  `evolver_publish_asset`, `evolver_distill_conversation`, `evolver_poll`.
+  `evolver_search_assets` (free-text `query` and/or `signals`), `evolver_status`,
+  `evolver_fetch_asset`, `evolver_report_reuse`, `evolver_publish_asset`,
+  `evolver_distill_conversation`, `evolver_poll`.
 - Slash commands: **`/evolve`** (checkpoint), **`/search`** (find network assets),
   **`/status`** (health), and engine wrappers **`/run`**, **`/solidify`**,
   **`/review`**, **`/sync`**, **`/distill`** (use the `@evomap/evolver` CLI when
@@ -45,7 +48,31 @@ It also ships:
 Search for **Evolver** in the Cursor plugin marketplace and install.
 
 Reload Cursor. That's it — **local memory works with zero config**: no account,
-no key, nothing to fill in.
+no key, nothing to fill in. Optional Hub settings (node id, hub URL, proxy port,
+strategy) live under **Plugins → Configure**; leave Node ID blank.
+
+### Plugin failed to load (`git init` / `xcode-select`)
+
+Cursor's plugin installer itself runs `git` when it copies the plugin into
+`~/.cursor/plugins/cache`. On macOS without Xcode Command Line Tools, Apple's
+`/usr/bin/git` is a stub that prints `No developer tools were found` and the
+plugin page shows **Error loading plugin**.
+
+Fix the installer side (pick one):
+
+```bash
+xcode-select --install
+# or
+brew install git
+```
+
+Then restart Cursor and reinstall / refresh the plugin.
+
+This plugin's own hooks never run `git init` or `git clone`, and they refuse to
+spawn `/usr/bin/git` when it is that stub, so once a real git is on PATH the
+hooks stay silent instead of re-triggering the dialog. Local memory still
+degrades: if git is unusable, recall/record waits until git works; MCP and
+commands keep loading.
 
 ### Connecting to the EvoMap network (optional)
 
@@ -83,7 +110,9 @@ Reload Cursor. The hooks activate on the next session.
 ## Requirements
 
 - **Node.js** (the hooks are Node scripts; Cursor invokes them via `node`).
-- Nothing else for local memory.
+- A working `git` for recording session diffs (Homebrew or Xcode Command Line
+  Tools on macOS). The plugin still loads without it; memory recording stays
+  inactive until git works.
 
 ## Modes
 
@@ -143,8 +172,10 @@ node registration.
 | Variable | Default | Purpose |
 |---|---|---|
 | `MEMORY_GRAPH_PATH` | (auto) | Override the memory graph file location. |
-| `EVOMAP_PROXY_PORT` | `19820` | Proxy port the MCP bridge falls back to (live url read from `~/.evolver/settings.json`). |
-| `EVOMAP_HUB_URL` / `EVOMAP_API_KEY` / `EVOMAP_NODE_ID` | (unset) | Enable Hub recording. |
+| `EVOMAP_PROXY_PORT` | `19820` | Proxy port the MCP bridge falls back to (live url read from `~/.evolver/settings.json`). Also settable under **Plugins → Configure**. |
+| `EVOMAP_HUB_URL` / `EVOMAP_API_KEY` / `EVOMAP_NODE_ID` | (unset) | Enable Hub recording. Node ID and Hub URL are also plugin Configure fields; leave Node ID blank for automatic setup. |
+| `EVOLVE_STRATEGY` | `balanced` | Default strategy for `/run`. Plugin Configure field. |
+| `EVOLVER_GIT_BINARY` | (auto) | Absolute path to git. Set empty to force "git unavailable" (hooks will not spawn git). |
 | `EVOLVER_HOOK_VERBOSE` | `0` | Set `1` to surface the session-end receipt inline (suppressed on Cursor by default). |
 
 ## License

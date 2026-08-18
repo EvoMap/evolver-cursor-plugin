@@ -15,9 +15,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
-const { spawnSync } = require('child_process');
 
-const { resolveProjectDir, findMemoryGraph, resolveWorkspaceId } = require('./_paths');
+const { resolveProjectDir, findMemoryGraph, resolveWorkspaceId, runGit } = require('./_paths');
 const { detectSignals } = require('./_signals');
 
 const STDIN_WATCHDOG_MS = parsePositiveInt(
@@ -77,22 +76,10 @@ function parsePositiveInt(value, fallback) {
 
 /** Run a git subcommand in `cwd`, returning { status, stdout } (stdout = ''). */
 function git(args, cwd) {
-  try {
-    const result = spawnSync('git', args, {
-      cwd,
-      shell: false,
-      timeout: GIT_TIMEOUT_MS,
-      maxBuffer: GIT_MAX_BUFFER,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return {
-      status: typeof result.status === 'number' ? result.status : 1,
-      stdout: typeof result.stdout === 'string' ? result.stdout : '',
-    };
-  } catch (_err) {
-    return { status: 1, stdout: '' };
-  }
+  return runGit(args, cwd, {
+    timeout: GIT_TIMEOUT_MS,
+    maxBuffer: GIT_MAX_BUFFER,
+  });
 }
 
 /**
@@ -324,7 +311,7 @@ async function finish(projectDir, diff, input) {
   if (!hasChanges) {
     const reason = diff.isRepo
       ? 'no changes detected this session'
-      : 'not a git workspace';
+      : 'git unavailable or not a git workspace';
     appendEvolutionLog(`[Evolution] Session end: nothing recorded (${reason}).`);
     emit({});
     return;

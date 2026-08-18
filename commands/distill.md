@@ -1,4 +1,5 @@
 ---
+name: distill
 description: Distill a reusable skill/gene from recent run history (optionally from an LLM response file).
 ---
 

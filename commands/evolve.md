@@ -1,4 +1,5 @@
 ---
+name: evolve
 description: Run an evolution cycle — recall relevant past outcomes, reflect on the current task, and record what was learned.
 ---
 

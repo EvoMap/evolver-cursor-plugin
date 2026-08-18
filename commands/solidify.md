@@ -1,4 +1,5 @@
 ---
+name: solidify
 description: Solidify the current working changes into a durable Evolver gene/capsule (with rollback safety).
 ---
 

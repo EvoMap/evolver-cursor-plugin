@@ -19,6 +19,13 @@
         "timeout": 8,
         "loop_limit": 1
       }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-end.js\"",
+        "timeout": 8,
+        "loop_limit": 1
+      }
     ]
   }
 }
