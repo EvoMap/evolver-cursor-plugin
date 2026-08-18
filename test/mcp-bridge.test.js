@@ -47,6 +47,35 @@ function rpc(proc, msg, timeoutMs) {
   });
 }
 
+test('MCP bridge ignores unexpanded ${EVOMAP_PROXY_PORT} placeholders', async () => {
+  const proc = spawn('node', [BRIDGE], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: Object.assign({}, process.env, {
+      EVOMAP_PROXY_PORT: '${EVOMAP_PROXY_PORT}',
+    }),
+  });
+  let stderr = '';
+  proc.stderr.on('data', (c) => {
+    stderr += c.toString('utf8');
+  });
+  try {
+    await rpc(proc, {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 'test', version: '0' },
+      },
+    });
+    assert.match(stderr, /127\.0\.0\.1:19820/);
+    assert.equal(stderr.includes('${EVOMAP_PROXY_PORT}'), false);
+  } finally {
+    proc.kill('SIGTERM');
+  }
+});
+
 test('MCP bridge lists query search and report_reuse, rejects empty search', async () => {
   const proc = startBridge();
   try {

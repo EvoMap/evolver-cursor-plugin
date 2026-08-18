@@ -25,7 +25,12 @@ const DEFAULT_PROTOCOL = '2025-06-18';
 function log(...a) { process.stderr.write('[evolver-proxy-mcp] ' + a.join(' ') + '\n'); }
 
 function defaultProxyUrl() {
-  return `http://127.0.0.1:${process.env.EVOMAP_PROXY_PORT || '19820'}`;
+  const raw = process.env.EVOMAP_PROXY_PORT;
+  const port =
+    typeof raw === 'string' && raw.length > 0 && !raw.includes('${')
+      ? raw
+      : '19820';
+  return `http://127.0.0.1:${port}`;
 }
 
 function isLoopbackHost(hostname) {

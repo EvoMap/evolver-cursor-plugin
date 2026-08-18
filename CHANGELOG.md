@@ -16,6 +16,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   notices are separate, throttled, and name the CLT / Homebrew fix.
 - `evolver_fetch_asset` now puts the reuse nudge on the returned **data** so
   the model actually sees it.
+- MCP bridge ignores unexpanded `${EVOMAP_PROXY_PORT}` placeholders from
+  Cursor Configure (empty/placeholder falls back to 19820).
 
 ### Added
 - Cursor **Plugins → Configure** variables: Node ID (leave blank), Hub URL,
