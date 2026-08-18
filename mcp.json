@@ -2,7 +2,13 @@
   "mcpServers": {
     "evolver-proxy": {
       "command": "node",
-      "args": ["${CURSOR_PLUGIN_ROOT}/mcp/evolver-proxy.mjs"]
+      "args": ["${CURSOR_PLUGIN_ROOT}/mcp/evolver-proxy.mjs"],
+      "env": {
+        "EVOMAP_PROXY_PORT": "${EVOMAP_PROXY_PORT}",
+        "EVOMAP_HUB_URL": "${EVOMAP_HUB_URL}",
+        "EVOMAP_NODE_ID": "${EVOMAP_NODE_ID}",
+        "EVOLVE_STRATEGY": "${EVOLVE_STRATEGY}"
+      }
     }
   }
 }

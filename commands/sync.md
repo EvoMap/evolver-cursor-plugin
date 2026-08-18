@@ -1,4 +1,5 @@
 ---
+name: sync
 description: Sync evolution assets (genes/capsules) between the local store and the EvoMap Hub.
 ---
 

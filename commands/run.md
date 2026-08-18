@@ -1,4 +1,5 @@
 ---
+name: run
 description: Run one Evolver self-evolution cycle on the current repo (collect signals → select/mutate genes → propose changes).
 ---
 

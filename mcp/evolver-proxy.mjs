@@ -19,13 +19,18 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
-const SERVER = { name: 'evolver-proxy', version: '0.1.0' };
+const SERVER = { name: 'evolver-proxy', version: '2.1.0' };
 const DEFAULT_PROTOCOL = '2025-06-18';
 
 function log(...a) { process.stderr.write('[evolver-proxy-mcp] ' + a.join(' ') + '\n'); }
 
 function defaultProxyUrl() {
-  return `http://127.0.0.1:${process.env.EVOMAP_PROXY_PORT || '19820'}`;
+  const raw = process.env.EVOMAP_PROXY_PORT;
+  const port =
+    typeof raw === 'string' && raw.length > 0 && !raw.includes('${')
+      ? raw
+      : '19820';
+  return `http://127.0.0.1:${port}`;
 }
 
 function isLoopbackHost(hostname) {
@@ -120,31 +125,74 @@ const TOOLS = [
   },
   {
     name: 'evolver_search_assets',
-    description: 'Search the EvoMap network for reusable evolution assets (Genes and Capsules) that match the given signals. Call this BEFORE starting substantive work to reuse proven approaches instead of reinventing them.',
+    description: 'Search the EvoMap network for reusable evolution assets (Genes and Capsules). Pass `query` to describe your current task/situation in natural language (semantic search — recommended when you are unsure which signal keywords apply) and/or `signals` to match on known signal keywords; provide at least one. Call this BEFORE starting substantive work to reuse proven approaches instead of reinventing them.',
     inputSchema: {
       type: 'object',
       properties: {
-        signals: { type: 'array', items: { type: 'string' }, description: 'Signal keywords, e.g. ["log_error","perf_bottleneck","test_failure"].' },
+        query: { type: 'string', description: 'Free-text description of the current task/situation. Runs natural-language semantic search over the network. Provide query and/or signals.' },
+        signals: { type: 'array', items: { type: 'string' }, description: 'Signal keywords, e.g. ["log_error","perf_bottleneck","test_failure"]. Provide query and/or signals.' },
         mode: { type: 'string', enum: ['semantic', 'exact'], default: 'semantic' },
         limit: { type: 'integer', minimum: 1, maximum: 25, default: 5 },
       },
-      required: ['signals'],
       additionalProperties: false,
     },
-    handler: (a) => proxyFetch('POST', '/asset/search', {
-      signals: a.signals, mode: a.mode || 'semantic', limit: a.limit || 5,
-    }),
+    handler: (a) => {
+      const query = typeof a.query === 'string' ? a.query.trim() : '';
+      const signals = Array.isArray(a.signals) ? a.signals : [];
+      if (!query && signals.length === 0) {
+        return Promise.resolve({
+          ok: false,
+          error: 'Provide a free-text `query` and/or a `signals` array.',
+        });
+      }
+      return proxyFetch('POST', '/asset/search', {
+        query: query || undefined,
+        signals: signals.length ? signals : undefined,
+        mode: a.mode || 'semantic',
+        limit: a.limit || 5,
+      });
+    },
   },
   {
     name: 'evolver_fetch_asset',
-    description: 'Fetch the full content of one or more evolution assets by their IDs (e.g. "sha256:abc..."), as returned by evolver_search_assets.',
+    description: 'Fetch the full content of one or more evolution assets by their IDs (e.g. "sha256:abc..."), as returned by evolver_search_assets. After you actually reuse any of these in your work, call evolver_report_reuse with their IDs so the original author gets credit.',
     inputSchema: {
       type: 'object',
       properties: { asset_ids: { type: 'array', items: { type: 'string' }, minItems: 1 } },
       required: ['asset_ids'],
       additionalProperties: false,
     },
-    handler: (a) => proxyFetch('POST', '/asset/fetch', { asset_ids: a.asset_ids }),
+    handler: async (a) => {
+      const res = await proxyFetch('POST', '/asset/fetch', { asset_ids: a.asset_ids });
+      if (!res.ok) return res;
+      const data = res.data && typeof res.data === 'object' ? res.data : { value: res.data };
+      return {
+        ok: true,
+        data: {
+          ...data,
+          _reuse_hint: 'If you build on any of these assets, call evolver_report_reuse with the asset_ids you reused so the author gets credit.',
+        },
+      };
+    },
+  },
+  {
+    name: 'evolver_report_reuse',
+    description: 'Report that you actually REUSED one or more fetched Gene/Capsule assets in your work (not just viewed them). This credits the original authors and feeds the reuse-reward network. Call it after you build on an asset fetched via evolver_fetch_asset; pass the asset_ids you genuinely reused.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        asset_ids: { type: 'array', items: { type: 'string' }, minItems: 1, description: 'The asset IDs you reused (as returned by evolver_fetch_asset).' },
+        outcome: { type: 'string', enum: ['success', 'failed'], description: 'Whether reusing them worked out. Defaults to success.' },
+        signals: { type: 'array', items: { type: 'string' }, description: 'Optional signal keywords describing the task you reused them on.' },
+      },
+      required: ['asset_ids'],
+      additionalProperties: false,
+    },
+    handler: (a) => proxyFetch('POST', '/asset/report-reuse', {
+      used_asset_ids: a.asset_ids,
+      status: a.outcome || 'success',
+      signals: a.signals,
+    }),
   },
   {
     name: 'evolver_publish_asset',
@@ -243,7 +291,7 @@ async function dispatch(req) {
         protocolVersion: params?.protocolVersion || DEFAULT_PROTOCOL,
         capabilities: { tools: {} },
         serverInfo: SERVER,
-        instructions: 'Evolver Proxy bridge. Use evolver_search_assets before substantive work to reuse proven genes/capsules; evolver_status to check the Proxy; evolver_publish_asset to contribute new ones.',
+        instructions: 'Evolver Proxy bridge. Use evolver_search_assets before substantive work (query and/or signals); evolver_status to check the Proxy; evolver_report_reuse after you actually reuse a fetched asset; evolver_publish_asset to contribute new ones.',
       });
     case 'notifications/initialized':
     case 'initialized':

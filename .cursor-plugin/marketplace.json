@@ -1,13 +1,19 @@
 {
   "name": "evolver",
   "owner": {
-    "name": "EvoMap"
+    "name": "EvoMap",
+    "email": "team@evomap.ai"
+  },
+  "metadata": {
+    "description": "Official Evolver plugin for Cursor — persistent, auditable evolution memory for the agent, powered by the Genome Evolution Protocol (GEP).",
+    "version": "2.1.0"
   },
   "plugins": [
     {
       "name": "evolver",
-      "source": "./",
+      "source": ".",
       "description": "Persistent, auditable evolution memory for the agent — recalls what worked, detects improvement signals, records outcomes. Powered by the Genome Evolution Protocol (GEP).",
+      "version": "2.1.0",
       "author": {
         "name": "EvoMap"
       },

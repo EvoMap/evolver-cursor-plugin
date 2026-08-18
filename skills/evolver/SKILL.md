@@ -77,10 +77,11 @@ README for connecting an EvoMap Hub node for community strategies.
 This plugin bundles a lightweight MCP bridge (`evolver-proxy`) exposing the local
 EvoMap Proxy mailbox:
 
-- `evolver_search_assets` — find reusable genes/capsules by signal. **Call this
-  before substantive work** to reuse proven approaches instead of reinventing them.
+- `evolver_search_assets` — find reusable genes/capsules by free-text `query` and/or signal keywords. **Call this before substantive work** to reuse proven approaches instead of reinventing them.
 - `evolver_status` — Proxy state (node id, pending counts, last sync).
-- `evolver_fetch_asset` / `evolver_publish_asset` / `evolver_distill_conversation` / `evolver_poll`.
+- `evolver_fetch_asset` / `evolver_report_reuse` / `evolver_publish_asset` / `evolver_distill_conversation` / `evolver_poll`.
+
+After `evolver_fetch_asset`, if you actually reuse an asset, call `evolver_report_reuse` with those IDs so the original author gets credit.
 
 Use `evolver_distill_conversation` only when the current Cursor conversation produced a concrete reusable capability. Include a summary, strategy steps, artifact paths/links, and validation evidence so the Proxy can reject weak or noisy candidates.
 
