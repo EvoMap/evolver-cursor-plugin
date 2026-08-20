@@ -1,25 +1,25 @@
 ---
 name: search
-description: Search the EvoMap network for reusable evolution assets (genes/capsules) matching a query or signals, via the evolver-proxy MCP tools.
+description: Search the EvoMap network for reusable Recipes first (ordered Gene/Capsule DNA), via the evolver-proxy MCP tools. Gene/Capsule search is fallback.
 ---
 
 # /search — search EvoMap
 
-Before doing substantive work from scratch, search the network for proven
-approaches.
+Before doing substantive work from scratch, search the network for a Recipe.
 
 Treat the arguments as a free-text query describing the current task (preferred),
 or as space-separated signal keywords (e.g. `log_error perf_bottleneck`). If none
-are given, infer 2–4 signals from the current task. Valid signals: `log_error`,
-`perf_bottleneck`, `test_failure`, `capability_gap`, `user_feature_request`,
-`deployment_issue`, `recurring_error`.
+are given, infer 2–4 keywords from the current task. Valid gene/capsule fallback
+signals: `log_error`, `perf_bottleneck`, `test_failure`, `capability_gap`,
+`user_feature_request`, `deployment_issue`, `recurring_error`.
 
-1. Call the `evolver_search_assets` MCP tool (from the `evolver-proxy` server)
-   with a `query` and/or those `signals`.
-2. Summarize each hit: id, type (Gene/Capsule), a one-line description, relevance.
-3. If a hit applies, fetch its full content with `evolver_fetch_asset` and adapt
-   it to the current task. After you actually reuse it, call `evolver_report_reuse`
-   with those asset IDs so the original author gets credit.
+1. Call `evolver_recipe_search` (from the `evolver-proxy` server) with `q` set to
+   the task. Omit `q` to list published Recipes.
+2. If a Recipe hit applies, call `evolver_recipe_express` with its `recipeId`.
+   Hub unfolds Gene then Capsule steps; do not parse recipe JSON locally.
+3. Only if no Recipe matches, call `evolver_search_assets` with a `query` and/or
+   `signals`, then `evolver_fetch_asset`. After you actually reuse a fetched
+   Gene/Capsule, call `evolver_report_reuse` with those asset IDs.
 
 If the tool reports the Proxy is unreachable, tell the user to run `evolver` once
 in a git repo to start it — the local memory hooks keep working regardless.

@@ -99,7 +99,13 @@ test('MCP bridge lists query search and report_reuse, rejects empty search', asy
     const names = tools.map((t) => t.name);
     assert.ok(names.includes('evolver_report_reuse'));
     assert.ok(names.includes('evolver_search_assets'));
+    assert.ok(names.includes('evolver_recipe_search'));
+    assert.ok(names.includes('evolver_recipe_express'));
+    const recipeIdx = names.indexOf('evolver_recipe_search');
+    const fallbackIdx = names.indexOf('evolver_search_assets');
+    assert.ok(recipeIdx >= 0 && recipeIdx < fallbackIdx);
     const search = tools.find((t) => t.name === 'evolver_search_assets');
+    assert.match(search.description, /Fallback/);
     assert.ok(search.inputSchema.properties.query);
     assert.ok(
       !search.inputSchema.required ||
@@ -113,6 +119,14 @@ test('MCP bridge lists query search and report_reuse, rejects empty search', asy
     });
     assert.equal(empty.result.isError, true);
     assert.match(empty.result.content[0].text, /query/);
+    const missingRecipe = await rpc(proc, {
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'tools/call',
+      params: { name: 'evolver_recipe_express', arguments: {} },
+    });
+    assert.equal(missingRecipe.result.isError, true);
+    assert.match(missingRecipe.result.content[0].text, /recipeId/);
   } finally {
     proc.kill('SIGTERM');
   }
