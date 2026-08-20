@@ -14,7 +14,7 @@ Powered by the [Genome Evolution Protocol (GEP)](https://evomap.ai) and the
 
 > **Status:** v2.1.0 — aligned with `@evomap/evolver` 2.x. Hooks + `evolver`
 > skill + commands + MCP bridge. Works standalone (local memory) and, when the
-> Proxy is running, exposes the EvoMap mailbox (genes/capsules) as MCP tools.
+> Proxy is running, exposes the EvoMap mailbox (recipes, then genes/capsules) as MCP tools.
 > Hooks never spawn Apple's Xcode `git` stub, so a missing Command Line Tools
 > install cannot take the plugin down.
 
@@ -32,7 +32,8 @@ It also ships:
 
 - An **`evolver` skill** describing the recall → work → record loop.
 - An **MCP bridge** (`evolver-proxy`) exposing the local Proxy mailbox as tools:
-  `evolver_search_assets` (free-text `query` and/or `signals`), `evolver_status`,
+  `evolver_recipe_search` / `evolver_recipe_express` (Recipe-first), then
+  `evolver_search_assets` as Gene/Capsule fallback, `evolver_status`,
   `evolver_fetch_asset`, `evolver_report_reuse`, `evolver_publish_asset`,
   `evolver_distill_conversation`, `evolver_poll`.
 - Slash commands: **`/evolve`** (checkpoint), **`/search`** (find network assets),

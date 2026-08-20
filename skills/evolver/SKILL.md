@@ -77,7 +77,9 @@ README for connecting an EvoMap Hub node for community strategies.
 This plugin bundles a lightweight MCP bridge (`evolver-proxy`) exposing the local
 EvoMap Proxy mailbox:
 
-- `evolver_search_assets` — find reusable genes/capsules by free-text `query` and/or signal keywords. **Call this before substantive work** to reuse proven approaches instead of reinventing them.
+- `evolver_recipe_search` — default first step: find Hub Recipes (ordered Gene/Capsule DNA). **Call this before substantive networked work.**
+- `evolver_recipe_express` — express a Recipe by id. Hub unfolds Gene then Capsule steps; do not parse recipe JSON locally.
+- `evolver_search_assets` — Fallback: find genes/capsules by free-text `query` and/or signal keywords when no Recipe matches.
 - `evolver_status` — Proxy state (node id, pending counts, last sync).
 - `evolver_fetch_asset` / `evolver_report_reuse` / `evolver_publish_asset` / `evolver_distill_conversation` / `evolver_poll`.
 
