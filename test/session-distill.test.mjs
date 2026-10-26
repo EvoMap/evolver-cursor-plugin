@@ -36,7 +36,7 @@ function recordingProxy() {
   return { sent, proxyFetch };
 }
 
-test('only a verified, completed turn that used tools and reused no strategy becomes a candidate', () => {
+test('only a verified, completed turn that used tools becomes a candidate', () => {
   assert.equal(skipReason('completed', record()), null);
   assert.equal(skipReason('aborted', record()), 'not_completed');
   assert.equal(skipReason('error', record()), 'not_completed');
