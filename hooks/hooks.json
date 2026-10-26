@@ -2,30 +2,31 @@
   "version": 1,
   "hooks": {
     "sessionStart": [
-      {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-start.js\"",
-        "timeout": 3
-      }
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-start.mjs\"", "timeout": 10 }
+    ],
+    "beforeSubmitPrompt": [
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/user-prompt-submit.mjs\"", "timeout": 660 }
+    ],
+    "preToolUse": [
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/pre-tool-use.mjs\"", "matcher": "^(Write|Delete)$", "timeout": 5 }
+    ],
+    "postToolUse": [
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/post-tool-use.mjs\"", "timeout": 5 }
+    ],
+    "postToolUseFailure": [
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/post-tool-use-failure.mjs\"", "timeout": 5 }
     ],
     "afterFileEdit": [
-      {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/signal-detect.js\"",
-        "timeout": 2
-      }
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/after-file-edit.mjs\"", "timeout": 5 }
+    ],
+    "afterAgentResponse": [
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/after-agent-response.mjs\"", "timeout": 5 }
     ],
     "stop": [
-      {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-end.js\"",
-        "timeout": 8,
-        "loop_limit": 1
-      }
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/stop.mjs\"", "timeout": 10 }
     ],
     "sessionEnd": [
-      {
-        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-end.js\"",
-        "timeout": 8,
-        "loop_limit": 1
-      }
+      { "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/session-end.mjs\"", "timeout": 10 }
     ]
   }
 }
