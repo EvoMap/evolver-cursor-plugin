@@ -5,7 +5,7 @@ import { editNoteOf, failureNoteOf, noteOf, turnRecordOf } from '../lib/turn-rec
 
 const shell = (command, output, exitCode = 0) => noteOf({ tool_name: 'Shell', tool_input: { command, cwd: '/p' }, tool_output: JSON.stringify({ output, exitCode }) });
 
-test('a turn record keeps commands, checks with their verdict, touched paths, applied edits and the answer', () => {
+test('a turn record keeps commands, checks with their verdict, touched paths, edited files and the answer', () => {
   const record = turnRecordOf([
     { kind: 'before', path: '/p/src/lru.js', hash: 'absent' },
     shell('ls src', 'lru.js'),
@@ -20,7 +20,7 @@ test('a turn record keeps commands, checks with their verdict, touched paths, ap
   ]);
   assert.deepEqual(record.commands, ['ls src', 'npm test', 'npm test']);
   assert.deepEqual(record.checks, [{ command: 'npm test', failed: true }, { command: 'npm test', failed: false }]);
-  assert.deepEqual(record.edits, ['export const cache = new Map();'], 'only what the edit wrote in, not the whole file');
+  assert.deepEqual(record.edits, ['/p/src/lru.js'], 'the files the turn edited');
   assert.deepEqual(record.paths, ['/p/src/old.js', '/p/src/lru.js', '/p/src/lru.js']);
   assert.deepEqual([...record.editedBefore], [['/p/src/lru.js', 'absent']]);
   assert.equal(record.answer, 'Done.');
@@ -33,6 +33,11 @@ test('a failed Shell call fails its check unless the person interrupted it, and 
   assert.equal(failure({ is_interrupt: true }).check, undefined);
   assert.equal(failure({ is_interrupt: true }).command, 'npm test');
   assert.equal(failure({ failure_type: 'permission_denied' }), null);
+});
+
+test('a deleted file counts as an edit, since afterFileEdit reports only writes', () => {
+  const record = turnRecordOf([noteOf({ tool_name: 'Delete', tool_input: { file_path: '/p/old.js' }, tool_output: '{}' })]);
+  assert.deepEqual(record.edits, ['/p/old.js']);
 });
 
 test('Shell output that is not JSON is read as plain output', () => {

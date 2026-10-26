@@ -128,7 +128,7 @@ test('session start adds nothing to the context when Evolver is set up', async (
   assert.deepEqual(await session('s-quiet').start(), {});
 });
 
-test("the turn end reports the strategy with the turn's own evidence and leaves no candidate for a reused one", async () => {
+test("the turn end reports the strategy as used with the turn's own evidence, and the verified turn that reused it is still a candidate", async () => {
   await startSandbox();
   const s = session('s-lru');
   await lruTurn(s);
@@ -138,10 +138,10 @@ test("the turn end reports the strategy with the turn's own evidence and leaves 
     asset_id: ASSET_ID,
     outcome: 'success',
     task_id: 'cursor:s-lru:1',
-    reason: 'Injected by Evolver into Cursor turn 1; applied: used; last test passed after failing earlier.',
+    reason: 'Injected by Evolver into Cursor turn 1; last test passed after failing earlier.',
     evidence: { tier: 'L1', applied: 'used', check: { kind: 'test', passed: true, fail_then_pass: true }, aborted: false, stage: 'immediate' },
   });
-  assert.deepEqual(candidates(), {}, 'asset_reused');
+  assert.equal(candidates()['s-lru']?.prompt, LRU_PROMPT, 'a turn that reused a strategy is distilled too');
 });
 
 test('a non-zero exit fails a check even when its output reads clean, and postToolUseFailure fails it too', async () => {
@@ -229,8 +229,8 @@ test('a chat closed while its turn runs reports the strategy aborted, with an em
     asset_id: ASSET_ID,
     outcome: 'failed',
     task_id: 'cursor:s-gone:1',
-    reason: 'Injected by Evolver into Cursor turn 1; applied: unknown; no check ran.',
-    evidence: { tier: 'none', applied: 'partial', aborted: true, stage: 'immediate' },
+    reason: 'Injected by Evolver into Cursor turn 1; no check ran.',
+    evidence: { tier: 'none', applied: 'used', aborted: true, stage: 'immediate' },
   });
   await new Promise((resolve) => setTimeout(resolve, 500));
   assert.equal(reuseReports().length, 1);
@@ -296,7 +296,7 @@ test("a killed session's open strategies are reported aborted at the next sessio
   const [report] = await waitFor(() => reuseReports());
   assert.equal(report.asset_id, 'sha256:orphan');
   assert.equal(report.task_id, 'cursor:s-killed:4');
-  assert.deepEqual(report.evidence, { tier: 'none', applied: 'partial', aborted: true, stage: 'immediate' });
+  assert.deepEqual(report.evidence, { tier: 'none', applied: 'used', aborted: true, stage: 'immediate' });
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.equal(reuseReports().length, 1, "another host's ledger is left to it");
 });
@@ -326,6 +326,18 @@ test('a verified turn becomes the candidate; a failed check leaves none, a later
 
   await s.prompt('不对，这样不行');
   assert.deepEqual(candidates(), {});
+});
+
+test('a verified turn that reused an injected strategy is distilled at session end like any other', async () => {
+  await startSandbox();
+  const s = session('s-reused');
+  await lruTurn(s);
+  const [report] = await waitFor(() => reuseReports());
+  assert.equal(report.evidence.applied, 'used');
+  await s.end();
+  const [body] = await waitFor(() => proxy.of('/conversation/distill'));
+  assert.equal(body.user_prompt, LRU_PROMPT);
+  assert.deepEqual(body.execution.trace, [{ command: 'node --test', exit: 1 }, { command: 'node --test 2>&1 | tail -5', exit: 0 }]);
 });
 
 test('a question that only asks for an opinion keeps the candidate', async () => {

@@ -83,8 +83,7 @@ Cursor shows a command's answer in the chat as a message the hook blocked the pr
 
 ## Session-end distillation
 
-A turn that ended `completed`, used tools, passed its last check and reused no injected strategy leaves a
-candidate in `~/.evolver/state/cursor-distill-pending.json`; a later verified turn replaces it, and a next prompt
+A turn that ended `completed`, used tools and passed its last check leaves a candidate in `~/.evolver/state/cursor-distill-pending.json`; a later verified turn replaces it, and a next prompt
 that reads as a correction drops it (a distillation already running sees that and stops). When the chat closes,
 a detached worker runs the Cursor agent CLI headless on the chat's model —
 `cursor-agent -p --output-format json --mode ask --trust --workspace <empty scratch dir> --model <model> <prompt>`,
@@ -92,7 +91,8 @@ read-only, without `--force` so nothing is applied — to write a Gene from a di
 touched paths, checks, final answer — never the whole history), and sends it to the Proxy's
 `POST /conversation/distill` with `platform: 'cursor'`, `trigger: 'session_end'`, `persist: true` and
 `publish: false`. The CLI reports no token usage, so no `distill_usage` is sent. Keys and tokens are stripped from
-the candidate first, paths and a manual focus included.
+the candidate first, paths and a manual focus included. A turn that reused an injected strategy is a candidate
+too: the engine's Gene intake drops a Gene that repeats one it already has.
 
 A candidate stays on disk until it is distilled; three failed tries (no `cursor-agent`, not signed in, an
 unparsed answer, a Proxy error) give it up. One whose chat is over — closed, or left by a Cursor process that is
@@ -115,15 +115,13 @@ Every strategy injected into a turn is reported through the Proxy's `POST /asset
 
 | Report | When | `task_id` | `evidence` |
 |---|---|---|---|
-| Turn end | `stop`, or the next prompt after a turn whose `stop` never came | `cursor:<conversation>:<turn>` | `tier` `L1` when the turn ran a test, build, lint or type check, else `none`; `applied`; `check` `{kind, passed, fail_then_pass}` of the last check; `aborted`; `stage: immediate` |
-| Correction | the next prompt says the answer did not hold, or approves it | `…:correction` | `tier: L3`, `applied`, `stage: correction` |
-| Retention | the next chat in the same project finds the turn's edits kept or reverted | `…:retention` | `tier: L2`, `applied`, `stage: retention` |
-| Aborted | the chat closes, or its Cursor process goes away, before the turn ends (those of a process that is gone go out at the next session start) | `cursor:<conversation>:<turn>` | `tier: none`, `applied: partial`, `aborted: true`, `stage: immediate` |
+| Turn end | `stop`, or the next prompt after a turn whose `stop` never came | `cursor:<conversation>:<turn>` | `tier` `L1` when the turn ran a test, build, lint or type check, else `none`; `applied: used`; `check` `{kind, passed, fail_then_pass}` of the last check; `aborted`; `stage: immediate` |
+| Correction | the next prompt says the answer did not hold, or approves it | `…:correction` | `tier: L3`, `applied: used`, `stage: correction` |
+| Retention | the next chat in the same project finds the turn's edits kept or reverted | `…:retention` | `tier: L2`, `applied: used`, `stage: retention` |
+| Aborted | the chat closes, or its Cursor process goes away, before the turn ends (those of a process that is gone go out at the next session start) | `cursor:<conversation>:<turn>` | `tier: none`, `applied: used`, `aborted: true`, `stage: immediate` |
 
-- **`applied`** compares the strategy's numbered steps with the turn's shell commands, touched paths, the text its
-  edits wrote in (200,000 characters a turn) and the final answer: `used` when half the steps show up, `partial`
-  when fewer do, `unused` when none do. A turn that left nothing to compare is sent as tier `none` with
-  `applied: partial`, and its reason says `applied: unknown`.
+- **`applied`** is always `used`: the model follows a strategy injected into its turn. Whether it helped is judged
+  by the outcome (the last check, or how the turn ended), the next prompt and whether the edits were kept.
 - **Checks** are `Shell` commands that run tests, builds, linters or type checkers. A non-zero exit code
   (`postToolUse`'s `exitCode`, or a `postToolUseFailure` for an error or a timeout) fails one; with exit code 0 the
   output is read too, since a failing suite piped through `tail` exits zero. A command the person interrupted has no
@@ -133,7 +131,7 @@ Every strategy injected into a turn is reported through the Proxy's `POST /asset
 - **Delivery.** Reports wait in `~/.evolver/state/cursor-reports-outbox.json` and are retried by the background
   worker at every turn end, follow-up prompt and session start for 8 days. One the Hub refuses as invalid is
   settled as rejected and never resent. Reports with evidence are also written once to the local root event log.
-- Reasons name the turn, the applied verdict and the check kind, never the prompt, a command or code, and the
+- Reasons name the turn and the check kind, never the prompt, a command or code, and the
   prompt loses keys and tokens before recall sends it.
 
 Every state file is prefixed `cursor-`, so another host's Evolver plugin never claims or reports this one's.

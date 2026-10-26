@@ -18,7 +18,9 @@ Aligned with the DeepSeek Harness plugin (dsh-evolver 0.3.0): Evolver stays out 
   `cursor:<conversation>:<turn>`.
 - Aborted reports when a chat closes mid-turn, and at the next session start for a chat whose Cursor process is
   gone; correction/praise follow-ups, retention reports, a report outbox with retries, and local root-event records.
-- Session-end distillation: a verified turn that reused no strategy becomes the chat's candidate
+- Every reuse report says `applied: used` (dsh-evolver #55): the model follows what is injected; the outcome,
+  the next prompt and kept edits judge whether it helped. `tier` is `L1` whenever a check ran.
+- Session-end distillation: a verified turn becomes the chat's candidate (one that reused a strategy too)
   (`~/.evolver/state/cursor-distill-pending.json`), dropped by a correction, and is distilled once in a detached
   worker by the Cursor agent CLI, headless (`cursor-agent -p --output-format json --mode ask`, empty workspace,
   on the chat's model), then sent to `POST /conversation/distill` with `platform: 'cursor'`. Three tries;
