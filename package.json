@@ -1,0 +1,11 @@
+{
+  "name": "evolver-cursor-plugin",
+  "version": "2.2.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

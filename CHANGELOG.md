@@ -5,10 +5,38 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-- MCP bridge is Recipe-first: `evolver_recipe_search` then `evolver_recipe_express`
-  against Proxy `/recipe/search` and `/recipe/express`. `evolver_search_assets`
-  remains as Gene/Capsule fallback when no Recipe hits.
+## [2.2.0] — 2026-10-26
+
+Aligned with the DeepSeek Harness plugin (dsh-evolver 0.3.0): Evolver stays out of the model context.
+
+### Added
+- `beforeSubmitPrompt` recalls one strategy by the prompt text and adds it as `additional_context`, ending with
+  `Apply them where they fit.`; inline edits (no `composer_mode`) are left alone.
+- `preToolUse` / `postToolUse` / `postToolUseFailure` / `afterFileEdit` / `afterAgentResponse` record the turn's
+  commands, checks (non-zero exit code, else failure output), paths, edits and answer; `stop` reports every
+  injected strategy with that evidence and the turn's own end (`completed` / `aborted` / `error`) as
+  `cursor:<conversation>:<turn>`.
+- Aborted reports when a chat closes mid-turn, and at the next session start for a chat whose Cursor process is
+  gone; correction/praise follow-ups, retention reports, a report outbox with retries, and local root-event records.
+- Session-end distillation: a verified turn that reused no strategy becomes the chat's candidate
+  (`~/.evolver/state/cursor-distill-pending.json`), dropped by a correction, and is distilled once in a detached
+  worker by the Cursor agent CLI, headless (`cursor-agent -p --output-format json --mode ask`, empty workspace,
+  on the chat's model), then sent to `POST /conversation/distill` with `platform: 'cursor'`. Three tries;
+  leftovers are claimed by the next session start. State writes go through a shared lock; every state file is
+  prefixed `cursor-`.
+- `/evolver-status`, `/evolver-search`, `/evolver-distill`, `/evolver-sync`, `/evolver-review`, `/evolver-run`
+  and `/evolver-solidify` are answered by the `beforeSubmitPrompt` hook itself, which stops the prompt before any
+  model sees it; `/evolver-evolve` is the one command left as a prompt.
+- Evolver is installed and its Proxy started in the background when missing or older than 2.0.44.
+
+### Removed
+- The `evolver-proxy` MCP server and its tools, the `evolver` skill, the `evolution-memory` rule and the
+  commands that told the model to call tools.
+- The session-start memory-graph summary and claim nudge, the `afterFileEdit` `[Evolution Signal]` notice, and
+  the `stop`/`sessionEnd` git-diff outcome written to the local memory graph and posted to the Hub's
+  `/a2a/evolution/record` (dsh keeps no equivalent; reuse reports and distillation replace it). The hooks no
+  longer run `git`.
+- The **Plugins → Configure** variables, which only fed the MCP server.
 
 ## [2.1.0] — 2026-08-18
 
