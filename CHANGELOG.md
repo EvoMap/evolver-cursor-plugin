@@ -29,7 +29,8 @@ Aligned with the DeepSeek Harness plugin (dsh-evolver 0.3.0): Evolver stays out 
 - `/evolver-status`, `/evolver-search`, `/evolver-distill`, `/evolver-sync`, `/evolver-review`, `/evolver-run`
   and `/evolver-solidify` are answered by the `beforeSubmitPrompt` hook itself, which stops the prompt before any
   model sees it; `/evolver-evolve` is the one command left as a prompt.
-- `/evolver-status` opens with the tokens reused strategies saved in this chat and in all chats (the savingsCore
+- `/evolver-status` opens with the tokens reused strategies saved in this chat and in all chats, then lists this
+  chat's reused assets (turn, name and id, last check, saving) (the savingsCore
   reference-reuse estimate, counted only after a passing check and capped at the turn's own tokens from `stop`).
 - Everything the plugin keeps in `~/.evolver/state` lives at most 3 days (undelivered reports, unreported
   injections, retention checks, chat files, per-chat savings, distillation candidates).

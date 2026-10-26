@@ -91,7 +91,11 @@ Cursor shows a command's answer in the chat as a message the hook blocked the pr
 
 ```text
 SAVED by reusing EvoMap strategies — this chat: ~33k tokens (≈$0.30) over 1 reused turn · all chats: ~124k tokens (≈$1.12) over 4 reused turns
+     turn 3 · "Guide Xiaohongshu operations from account positioning…" (sha256:3fccd18…) · last check passed · ~33k saved
 ```
+
+Below it, one line for each strategy this chat reused (the latest 20): the turn, the asset's name and id, how the
+turn's last check went, and what was saved, or `no saving counted`.
 
 A turn counts only when it reused an injected strategy and its last check passed. Its saving is the reference-reuse
 estimate of `@evomap/evolver-core`'s savingsCore (spec 0.3.0), the one the Claude Code and Codex plugins show, from
@@ -99,7 +103,7 @@ the lines the turn's edits changed (`afterFileEdit`), capped at the tokens the t
 `input_tokens + output_tokens + cache_write_tokens`, without cache reads. Dollars use the same blended $9 per
 million tokens. Cursor's hooks have no message that reaches only the person (`stop` can only send the model a
 follow-up), so the figures are shown on demand rather than after each turn. They are kept in
-`~/.evolver/state/cursor-savings.json`: a running total, and per chat for chats seen in the last 3 days.
+`~/.evolver/state/cursor-savings.json`: a running total, and per chat (with its reuses) for chats seen in the last 3 days.
 
 ## Session-end distillation
 

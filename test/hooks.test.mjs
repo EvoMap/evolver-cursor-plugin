@@ -534,6 +534,7 @@ test('/evolver-status leads with the tokens reused strategies saved, in this cha
   await lruTurn(s);
   const status = (await s.prompt('/evolver-status')).user_message.split('\n');
   assert.equal(status[1], 'SAVED by reusing EvoMap strategies — this chat: ~33k tokens (≈$0.30) over 1 reused turn · all chats: ~33k tokens (≈$0.30) over 1 reused turn');
+  assert.equal(status[2], `     turn 1 · "LRU cache in Node.js" (${ASSET_ID.slice(0, 14)}…) · last check passed · ~33k saved`);
 
   const other = session('s-other');
   assert.match((await other.prompt('/evolver-status')).user_message, /this chat: nothing yet · all chats: ~33k tokens/);
