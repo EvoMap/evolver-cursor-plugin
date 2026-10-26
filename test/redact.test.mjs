@@ -28,3 +28,10 @@ test('code identifiers that merely end in a secret word are left alone', () => {
 test('a secret behind an unclosed quote is still redacted', () => {
   for (const text of ['API_KEY="abcdef123456', "TOKEN='abcdef123456"]) assert.doesNotMatch(withoutSecrets(text), /abcdef123456/, text);
 });
+
+// Assembled at run time, so no literal that secret scanners take for a live key is committed.
+const stripeStyle = (prefix, mode) => [prefix, mode, 'x'.repeat(24)].join('_');
+
+test('Stripe keys written with underscores are redacted', () => {
+  assert.equal(withoutSecrets(`key ${stripeStyle('sk', 'live')} and ${stripeStyle('rk', 'test')}`), 'key [redacted] and [redacted]');
+});

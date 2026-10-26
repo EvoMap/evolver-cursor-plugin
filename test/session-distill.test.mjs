@@ -188,3 +188,12 @@ test('a candidate older than three days is dropped whoever owns it; a fresher on
   assert.deepEqual(dueCandidates({ sessionId: 'stuck' }), []);
   assert.equal(dueCandidates({ sessionId: 'fresh' }).length, 1);
 });
+
+test('a claim that did not reach the disk is not handed out', (t) => {
+  t.after(freshHome());
+  rememberCandidate('s', { pid: null, closed: true, at: Date.now(), turn: 1 });
+  const lost = claimLeftoverCandidates({ isGone: () => false, pid: 7 });
+  assert.equal(lost.length, 1);
+  rememberCandidate('s', { pid: null, closed: true, at: Date.now() + 1, turn: 2 });
+  assert.equal(isCurrentCandidate('s', lost[0].candidate), false, 'a newer candidate is not the claimed one');
+});

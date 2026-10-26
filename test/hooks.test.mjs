@@ -548,3 +548,28 @@ test('a reused turn whose last check failed, or that ran none, saves nothing', a
   await s.finish('Still failing.');
   assert.match((await s.prompt('/evolver-status')).user_message, /this chat: nothing yet · all chats: nothing yet/);
 });
+
+test('a late sessionEnd leaves alone a turn a new prompt opened in the same chat', async () => {
+  await startSandbox();
+  const s = session('s-reopen');
+  await s.prompt(LRU_PROMPT);
+  await s.finish('done');
+  await waitFor(() => reuseReports());
+  const ending = s.end();
+  await s.prompt('用 Node 再写一个 LRU cache 的测试，覆盖淘汰顺序');
+  await ending;
+  await s.shell('node --test', PASSED_RUN);
+  await s.finish('tests pass');
+  const second = await waitFor(() => reuseReports().find((report) => report.task_id === 'cursor:s-reopen:2'));
+  assert.equal(second.evidence.tier, 'L1', 'the new turn kept its injection and its record');
+});
+
+test('a hook without generation_id records nothing into a turn that has one', async () => {
+  await startSandbox();
+  const s = session('s-nogen');
+  await s.prompt(LRU_PROMPT);
+  await runHook('post-tool-use', { conversation_id: 's-nogen', hook_event_name: 'postToolUse', tool_name: 'Shell', tool_input: { command: 'npm test' }, tool_output: JSON.stringify({ output: PASSED_RUN, exitCode: 0 }) }, sandbox.env);
+  await s.finish('done');
+  const [report] = await waitFor(() => reuseReports());
+  assert.equal(report.evidence.check, undefined);
+});

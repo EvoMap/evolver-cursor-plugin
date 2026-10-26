@@ -20,15 +20,14 @@ async function ranCleanly(work) {
 }
 
 const tasks = new Set(process.argv.slice(2));
-const results = [await ranCleanly(() => pruneOldSessions()), await ranCleanly(() => dropStaleCandidates())];
-if (tasks.has(ENGINE_TASK)) results.push(await ranCleanly(() => setUpEngine(engineRuntime())));
-if (tasks.has(DRAIN_TASK)) {
-  results.push(await ranCleanly(() => drainOutbox({ proxyFetch: createProxyClient(), recordLocally: recordReuseLocally })));
-}
-if (tasks.has(DISTILL_TASK)) {
-  results.push(await ranCleanly(() => distillLeftovers({
+const housekeeping = [await ranCleanly(() => pruneOldSessions()), await ranCleanly(() => dropStaleCandidates())];
+// Installing Evolver can take minutes, so it runs beside report delivery and distillation rather than before them.
+const jobs = await Promise.all([
+  tasks.has(ENGINE_TASK) && ranCleanly(() => setUpEngine(engineRuntime())),
+  tasks.has(DRAIN_TASK) && ranCleanly(() => drainOutbox({ proxyFetch: createProxyClient(), recordLocally: recordReuseLocally })),
+  tasks.has(DISTILL_TASK) && ranCleanly(() => distillLeftovers({
     proxyFetch: createProxyClient({ timeoutMs: DISTILL_TIMEOUT_MS }),
     runModel: cursorModelRunner(),
-  })));
-}
-process.exit(results.every(Boolean) ? 0 : 1);
+  })),
+].filter(Boolean));
+process.exit([...housekeeping, ...jobs].every(Boolean) ? 0 : 1);

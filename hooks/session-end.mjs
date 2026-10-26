@@ -13,15 +13,16 @@ const STOP_WAIT_MS = 2_000;
 // Cursor waits for sessionEnd only while a window closes, and kills it at its timeout, so it only settles state
 // on disk; the closed candidate is distilled by the detached worker it starts, or claimed by the next session
 // start if that worker fails. A stop already settling its turn is let finish first, so its candidate is the one
-// closed here; a turn still running is cut off by the close and ends aborted.
+// closed here; a turn still running is cut off by the close and ends aborted. A prompt that opened a new turn in the
+// meantime means the chat lives on, and nothing of it is cleaned up.
 runHook(async (input) => {
   const sessionId = sessionIdOf(input);
   if (!sessionId) return {};
   const session = await settledSession(sessionId, STOP_WAIT_MS);
-  if (!session.closed) endOpenTurn({ sessionId, reasonKind: 'aborted', projectDir: projectDirOf(input) });
+  if (!session.closed) endOpenTurn({ sessionId, turnId: session.turnId, reasonKind: 'aborted', projectDir: projectDirOf(input) });
+  if (!endSession(sessionId, session.turn)) return {};
   queueReports(abortedReports(takeUnreported(sessionId, Infinity)));
   closeCandidate(sessionId);
-  endSession(sessionId);
   forgetSession(sessionId);
   startInBackground([DRAIN_TASK, DISTILL_TASK]);
   return {};
