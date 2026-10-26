@@ -7,6 +7,7 @@ import { engineRuntime } from '../lib/engine-runtime.mjs';
 import { recordReuseLocally } from '../lib/local-ledger.mjs';
 import { createProxyClient } from '../lib/proxy.mjs';
 import { drainOutbox } from '../lib/report-queue.mjs';
+import { dropStaleCandidates } from '../lib/session-distill.mjs';
 import { pruneOldSessions } from '../lib/session-state.mjs';
 
 async function ranCleanly(work) {
@@ -19,7 +20,7 @@ async function ranCleanly(work) {
 }
 
 const tasks = new Set(process.argv.slice(2));
-const results = [await ranCleanly(() => pruneOldSessions())];
+const results = [await ranCleanly(() => pruneOldSessions()), await ranCleanly(() => dropStaleCandidates())];
 if (tasks.has(ENGINE_TASK)) results.push(await ranCleanly(() => setUpEngine(engineRuntime())));
 if (tasks.has(DRAIN_TASK)) {
   results.push(await ranCleanly(() => drainOutbox({ proxyFetch: createProxyClient(), recordLocally: recordReuseLocally })));

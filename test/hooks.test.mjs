@@ -395,8 +395,8 @@ test("a killed session's candidate is claimed and distilled by the next session 
   await startSandbox({ assets: [] });
   const candidate = (pid, at) => ({ prompt: 'p', commands: ['npm test'], paths: [], checks: [], answer: 'a', model: { model: 'm' }, turn: 1, pid, attempts: 0, at });
   mkdirSync(statePath(''), { recursive: true });
-  writeFileSync(statePath('cursor-distill-pending.json'), JSON.stringify({ 's-killed': candidate(deadPid(), 1), 's-idle': candidate(process.pid, 2) }));
-  writeFileSync(statePath('codex-distill-pending.json'), JSON.stringify({ 's-codex': candidate(deadPid(), 3) }));
+  writeFileSync(statePath('cursor-distill-pending.json'), JSON.stringify({ 's-killed': candidate(deadPid(), Date.now() - 2), 's-idle': candidate(process.pid, Date.now() - 1) }));
+  writeFileSync(statePath('codex-distill-pending.json'), JSON.stringify({ 's-codex': candidate(deadPid(), Date.now()) }));
 
   await session('s-next').start();
   await waitFor(() => proxy.of('/conversation/distill'));

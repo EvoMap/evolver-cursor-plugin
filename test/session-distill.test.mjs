@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { distillDue, distillSession } from '../lib/distiller.mjs';
 import {
   argumentsOf, candidateOf, claimLeftoverCandidates, claimSessionCandidate, closeCandidate, distillCandidate, distillPrompt,
-  dropCandidate, dueCandidates, isCurrentCandidate, rememberCandidate, settleCandidate, skipReason,
+  dropCandidate, dropStaleCandidates, dueCandidates, isCurrentCandidate, rememberCandidate, settleCandidate, skipReason,
 } from '../lib/session-distill.mjs';
 import { freshHome } from './helpers/sandbox.mjs';
 
@@ -177,4 +177,14 @@ test('keys and tokens never reach the candidate, nor the prompt a manual focus w
   });
   assert.doesNotMatch(JSON.stringify(candidate), new RegExp(secret));
   assert.doesNotMatch(distillPrompt(candidate, `Authorization: Bearer ${secret}`), new RegExp(secret));
+});
+
+test('a candidate older than three days is dropped whoever owns it; a fresher one stays', (t) => {
+  t.after(freshHome());
+  const day = 24 * 60 * 60 * 1000;
+  rememberCandidate('stuck', { pid: null, at: 0 });
+  rememberCandidate('fresh', { pid: null, at: 2 * day });
+  dropStaleCandidates(4 * day);
+  assert.deepEqual(dueCandidates({ sessionId: 'stuck' }), []);
+  assert.equal(dueCandidates({ sessionId: 'fresh' }).length, 1);
 });

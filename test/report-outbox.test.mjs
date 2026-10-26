@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { OUTBOX_TTL_MS, isSettled, withAttempt, withQueued } from '../lib/report-outbox.mjs';
+import { STATE_TTL_MS, isSettled, withAttempt, withQueued } from '../lib/report-outbox.mjs';
 
 const report = (taskId, assetId = 'sha256:a') => ({ asset_id: assetId, task_id: taskId, outcome: 'success', evidence: { tier: 'L3' } });
 
@@ -13,9 +13,9 @@ test('the same report is queued once, keyed by task id and asset', () => {
   assert.equal(Object.keys(withQueued(twice, [{ report: report('t:1:correction', 'sha256:b'), sessionId: 's' }], 3)).length, 2);
 });
 
-test('reports older than eight days are dropped', () => {
+test('reports older than three days are dropped', () => {
   const queued = withQueued({}, [{ report: report('t:1'), sessionId: 's' }], 0);
-  assert.deepEqual(withQueued(queued, [], OUTBOX_TTL_MS + 1), {});
+  assert.deepEqual(withQueued(queued, [], STATE_TTL_MS + 1), {});
 });
 
 test('each delivery attempt is counted', () => {

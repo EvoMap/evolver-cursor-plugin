@@ -27,8 +27,8 @@ test('savings add up per chat and in total; a chat unseen for the outbox TTL lea
   t.after(freshHome());
   const day = 24 * 60 * 60 * 1000;
   recordSaving('old', 10_000, 0);
-  recordSaving('new', 2_000, 9 * day);
-  recordSaving('new', 3_000, 9 * day);
+  recordSaving('new', 2_000, 4 * day);
+  recordSaving('new', 3_000, 4 * day);
   assert.deepEqual(savingsOf('new'), { session: { tokens: 5_000, turns: 2 }, total: { tokens: 15_000, turns: 3 } });
   assert.deepEqual(savingsOf('old').session, { tokens: 0, turns: 0 });
   assert.deepEqual(savingsOf('never'), { session: { tokens: 0, turns: 0 }, total: { tokens: 15_000, turns: 3 } });

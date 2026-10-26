@@ -50,6 +50,10 @@ Reload the window; Settings → Hooks lists the plugin's hooks.
 
 - Cursor with hooks (3.x). `beforeSubmitPrompt`'s `additional_context`, which carries the recalled strategy, is
   read by Cursor 3.27 but not yet in Cursor's hook docs.
+- Cursor's **Include Third-Party Plugins, Skills, and Other Configs** setting on (the default). Cursor 3.27 loads a
+  plugin's hooks only while it is on (`loadPluginHooks` returns early otherwise), so with it off the plugin is listed
+  but none of its hooks runs. The same setting also imports Claude Code hooks from `~/.claude/settings.json`; if those
+  include Evolver's own (`evolver inject prompt-recall`), a prompt is recalled for twice.
 - Node.js 20 or newer on the `PATH` Cursor's hooks see.
 - Evolver 2.0.44 or newer. The plugin installs it under `~/.evolver/state/cursor-engine` and starts its Proxy in
   the background when it is missing; `npm install -g @evomap/evolver@latest` works too.
@@ -95,7 +99,7 @@ the lines the turn's edits changed (`afterFileEdit`), capped at the tokens the t
 `input_tokens + output_tokens + cache_write_tokens`, without cache reads. Dollars use the same blended $9 per
 million tokens. Cursor's hooks have no message that reaches only the person (`stop` can only send the model a
 follow-up), so the figures are shown on demand rather than after each turn. They are kept in
-`~/.evolver/state/cursor-savings.json`: a running total, and per chat for chats seen in the last 8 days.
+`~/.evolver/state/cursor-savings.json`: a running total, and per chat for chats seen in the last 3 days.
 
 ## Session-end distillation
 
@@ -145,7 +149,7 @@ Every strategy injected into a turn is reported through the Proxy's `POST /asset
   either where Cursor fails it with `Unknown error`; its streaming Shell executor instead reports such a command as
   exit code 0 with the output so far and nothing to tell it apart, so there the output alone decides.
 - **Delivery.** Reports wait in `~/.evolver/state/cursor-reports-outbox.json` and are retried by the background
-  worker at every turn end, follow-up prompt and session start for 8 days. One the Hub refuses as invalid is
+  worker at every turn end, follow-up prompt and session start for 3 days. One the Hub refuses as invalid is
   settled as rejected and never resent. Reports with evidence are also written once to the local root event log.
 - Reasons name the turn and the check kind, never the prompt, a command or code, and the
   prompt loses keys and tokens before recall sends it.
