@@ -29,6 +29,8 @@ Aligned with the DeepSeek Harness plugin (dsh-evolver 0.3.0): Evolver stays out 
 - `/evolver-status`, `/evolver-search`, `/evolver-distill`, `/evolver-sync`, `/evolver-review`, `/evolver-run`
   and `/evolver-solidify` are answered by the `beforeSubmitPrompt` hook itself, which stops the prompt before any
   model sees it; `/evolver-evolve` is the one command left as a prompt.
+- `/evolver-status` opens with the tokens reused strategies saved in this chat and in all chats (the savingsCore
+  reference-reuse estimate, counted only after a passing check and capped at the turn's own tokens from `stop`).
 - Evolver is installed and its Proxy started in the background when missing or older than 2.0.44.
 
 ### Removed

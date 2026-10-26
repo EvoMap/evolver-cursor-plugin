@@ -21,6 +21,7 @@ const LRU_SOURCE = 'export class LruCache {\n  #entries = new Map();\n  evict() 
 const FAILED_RUN = 'not ok 1 - evicts the oldest\nAssertionError: expected 1 to equal 2\n';
 const PASSED_RUN = 'ℹ tests 2\nℹ pass 2\nℹ fail 0\n';
 const LRU_PROMPT = '用 Node 写一个 LRU cache，带 get/set 和淘汰';
+const TURN_TOKENS = { input_tokens: 30_000, output_tokens: 2_000, cache_read_tokens: 50_000, cache_write_tokens: 1_000 };
 
 let sandbox = null;
 let proxy = null;
@@ -69,10 +70,10 @@ function session(id) {
       await hook('after-file-edit', 'afterFileEdit', { file_path: path, edits: [{ old_string: '', new_string: content }] });
     },
     answer: (text) => hook('after-agent-response', 'afterAgentResponse', { text }),
-    stop: (status = 'completed') => hook('stop', 'stop', { status, loop_count: 0 }),
+    stop: (status = 'completed') => hook('stop', 'stop', { status, loop_count: 0, ...TURN_TOKENS }),
     finish: async (text, status = 'completed') => {
       if (status === 'completed') await hook('after-agent-response', 'afterAgentResponse', { text });
-      return hook('stop', 'stop', { status, loop_count: 0 });
+      return hook('stop', 'stop', { status, loop_count: 0, ...TURN_TOKENS });
     },
     end: (reason = 'user_close') => hook('session-end', 'sessionEnd', { reason, duration_ms: 1000, is_background_agent: false, final_status: 'completed' }),
   };
@@ -525,4 +526,24 @@ test('a plugin command whose CLI cannot run answers its error in the chat instea
   const answer = await session('s-broken').prompt('/evolver-sync');
   assert.equal(answer.continue, false);
   assert.match(answer.user_message, /\S/);
+});
+
+test('/evolver-status leads with the tokens reused strategies saved, in this chat and in all chats', async () => {
+  await startSandbox();
+  const s = session('s-saved');
+  await lruTurn(s);
+  const status = (await s.prompt('/evolver-status')).user_message.split('\n');
+  assert.equal(status[1], 'SAVED by reusing EvoMap strategies — this chat: ~33k tokens (≈$0.30) over 1 reused turn · all chats: ~33k tokens (≈$0.30) over 1 reused turn');
+
+  const other = session('s-other');
+  assert.match((await other.prompt('/evolver-status')).user_message, /this chat: nothing yet · all chats: ~33k tokens/);
+});
+
+test('a reused turn whose last check failed, or that ran none, saves nothing', async () => {
+  await startSandbox();
+  const s = session('s-unsaved');
+  await s.prompt(LRU_PROMPT);
+  await s.shell('npm test', FAILED_RUN, 1);
+  await s.finish('Still failing.');
+  assert.match((await s.prompt('/evolver-status')).user_message, /this chat: nothing yet · all chats: nothing yet/);
 });

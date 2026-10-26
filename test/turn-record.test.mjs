@@ -21,6 +21,7 @@ test('a turn record keeps commands, checks with their verdict, touched paths, ed
   assert.deepEqual(record.commands, ['ls src', 'npm test', 'npm test']);
   assert.deepEqual(record.checks, [{ command: 'npm test', failed: true }, { command: 'npm test', failed: false }]);
   assert.deepEqual(record.edits, ['/p/src/lru.js'], 'the files the turn edited');
+  assert.equal(record.changedLines, 3, 'the lines its edits took out or put in');
   assert.deepEqual(record.paths, ['/p/src/old.js', '/p/src/lru.js', '/p/src/lru.js']);
   assert.deepEqual([...record.editedBefore], [['/p/src/lru.js', 'absent']]);
   assert.equal(record.answer, 'Done.');

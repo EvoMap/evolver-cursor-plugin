@@ -1,5 +1,5 @@
 ---
-description: "Show Evolver health: the Proxy, engine setup, recent recalls, reuse reports and distillation candidates."
+description: "Show the tokens Evolver saved in this chat and in all chats, and its health: the Proxy, engine setup, recent recalls, reuse reports and distillation candidates."
 ---
 
 The Evolver plugin answers `/evolver-status` itself, from its beforeSubmitPrompt hook, before this prompt reaches you.

@@ -24,7 +24,7 @@ are answered by the plugin itself, before any model sees them.
 | `postToolUse`, `postToolUseFailure` | Notes the turn's commands, checks (test, build, lint, type check) with pass or fail, and touched paths. |
 | `afterFileEdit` | Notes the text each edit wrote in. |
 | `afterAgentResponse` | Notes the turn's final answer. |
-| `stop` | Reports every strategy injected into the turn, with the turn's end as Cursor gives it (`completed`, `aborted`, `error`); makes the turn the chat's distillation candidate when it completed verified. Cursor sends the next prompt without waiting for this hook, so that prompt waits up to 3 s for the turn to settle before it labels the reuses or drops the candidate; a turn whose stop never comes is closed then as an error. |
+| `stop` | Counts what a reused strategy saved the turn (see [Tokens saved](#tokens-saved)) and reports every strategy injected into the turn, with the turn's end as Cursor gives it (`completed`, `aborted`, `error`); makes the turn the chat's distillation candidate when it completed verified. Cursor sends the next prompt without waiting for this hook, so that prompt waits up to 3 s for the turn to settle before it labels the reuses or drops the candidate; a turn whose stop never comes is closed then as an error. |
 | `sessionEnd` (chat or window closed) | Reports a turn still running as aborted, and anything left unreported too; closes the candidate and starts its distillation in the background. Keeps the chat's turn counter, so a reopened chat never repeats a task id. |
 
 Each hook does nothing when it runs inside the plugin's own headless distillation (`EVOLVER_HEADLESS=1`), which
@@ -73,13 +73,29 @@ one, the `beforeSubmitPrompt` hook runs it and stops the prompt with the answer 
 
 | Command | What it does |
 | --- | --- |
-| `/evolver-status` | The Proxy, engine setup, the latest recall, recent reuse reports with the Hub's verdict, waiting candidates, claim link. |
+| `/evolver-status` | Leads with the tokens reused strategies saved in this chat and in all chats, then the Proxy, engine setup, the latest recall, recent reuse reports with the Hub's verdict, waiting candidates, claim link. |
 | `/evolver-search <text>` | Searches the EvoMap network (`POST /asset/search`). |
 | `/evolver-distill [focus]` | Distills this chat's latest verified turn now, through the Cursor agent CLI. |
 | `/evolver-evolve [focus]` | An evolution checkpoint for the agent, dsh's text as is (Cursor appends the focus): the only command that is a prompt. It is recalled for like any prompt, and is no verdict on the turn before it, whose reuses wait for the next prompt. |
 | `/evolver-sync`, `/evolver-review`, `/evolver-run`, `/evolver-solidify` | Run the `evolver` CLI (`npx -y @evomap/evolver@^2.0.44` when it is not installed) with the arguments quoted as a shell would, ten minutes at most. |
 
 Cursor shows a command's answer in the chat as a message the hook blocked the prompt with.
+
+## Tokens saved
+
+`/evolver-status` opens with what reusing EvoMap strategies saved:
+
+```text
+SAVED by reusing EvoMap strategies — this chat: ~33k tokens (≈$0.30) over 1 reused turn · all chats: ~124k tokens (≈$1.12) over 4 reused turns
+```
+
+A turn counts only when it reused an injected strategy and its last check passed. Its saving is the reference-reuse
+estimate of `@evomap/evolver-core`'s savingsCore (spec 0.3.0), the one the Claude Code and Codex plugins show, from
+the lines the turn's edits changed (`afterFileEdit`), capped at the tokens the turn spent itself: `stop`'s
+`input_tokens + output_tokens + cache_write_tokens`, without cache reads. Dollars use the same blended $9 per
+million tokens. Cursor's hooks have no message that reaches only the person (`stop` can only send the model a
+follow-up), so the figures are shown on demand rather than after each turn. They are kept in
+`~/.evolver/state/cursor-savings.json`: a running total, and per chat for chats seen in the last 8 days.
 
 ## Session-end distillation
 
